@@ -1,0 +1,51 @@
+CREATE TABLE users (
+    username VARCHAR(100) PRIMARY KEY,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE folders (
+    name VARCHAR(255) NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    owner VARCHAR(100) NOT NULL,
+    PRIMARY KEY (owner, name),
+    FOREIGN KEY (owner) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE `groups` (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    owner VARCHAR(100) NOT NULL,
+    FOREIGN KEY (owner) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE group_user (
+    id_group INT NOT NULL,
+    username VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id_group, username),
+    FOREIGN KEY (id_group) REFERENCES `groups`(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    id_group INT,
+    folder_owner VARCHAR(100),
+    folder_name VARCHAR(255),
+    FOREIGN KEY (id_group) REFERENCES `groups`(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (folder_owner, folder_name) REFERENCES folders(owner, name) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE task_user (
+    id_task INT NOT NULL,
+    username VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id_task, username),
+    FOREIGN KEY (id_task) REFERENCES tasks(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE 
+);
+
+SHOW TABLES;
