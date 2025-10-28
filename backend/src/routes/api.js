@@ -2,6 +2,12 @@ import express from "express";
 import db from "../lib/db.js";
 import { protectedRoute } from "../lib/protect.js";
 
+const STATUS = {
+    'to do': 'doing',
+    'doing': 'done',
+    'done': 'to do'
+};
+
 const router = express.Router();
 
 router.post("/tasks", protectedRoute, async(req, res)=>{
@@ -51,6 +57,49 @@ router.post("/tasks", protectedRoute, async(req, res)=>{
     }
 });
 
+router.put("/tasks", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {id} = req.body;
+    if (!id) return res.status(400).json({error: "Missing data"});
+    try {
+        const [result] = await db.execute("SELECT * FROM tasks JOIN task_user ON tasks.id = task_user.id_task WHERE tasks.id = ? AND task_user.username = ?", [id, user.username]);
+        if (result.length === 0) return res.status(400).json({error: "Action not allowed"});
+        const currentStatus = result[0].status;
+
+        const nextStatus = STATUS[currentStatus] || currentStatus;
+        
+        
+        await db.execute("UPDATE tasks SET status = ? WHERE id = ?", [nextStatus, id]);
+        result[0].status = nextStatus;
+        return res.status(200).json(result[0]);
+    } catch (error) {
+        console.error("Error in put tasks: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.put("/tasks/update", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {id, } = req.body;
+
+});
+
+router.delete("/tasks", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {id} = req.body;
+    if (!id) return res.status(400).json({error: "Data missing"});
+    try {
+        const [result] = await db.execute("SELECT * FROM tasks JOIN task_user ON tasks.id = task_user.id_task WHERE tasks.id = ?", [id]);
+        if (result.length === 0 || result[0].username !== user.username) return res.status(400).json({error: "Not allowed"});
+
+        await db.execute("DELETE FROM tasks WHERE id = ?", [id]);
+        return res.status(200).json({message: `Task ${id} deleted`});
+    } catch (error) {
+        console.error("Error in delete tasks: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+})
+
 router.get("/tasks", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {id_group, folder_name} = req.query;
@@ -85,6 +134,21 @@ router.post("/groups", protectedRoute, async(req, res)=>{
         return res.status(500).json({ error: error.message });
     }
 });
+
+router.get("/groups", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    try {
+        const [groups] = await db.execute("SELECT * FROM `groups` JOIN group_user ON `groups`.id = group_user.id_group WHERE group_user.username = ?", [user.username]);
+        for (const group of groups){
+            const [users] = await db.execute("SELECT username FROM group_user WHERE id_group = ?", [group.id]);
+            group.users = users;
+        }
+        return res.status(200).json(groups);
+    } catch (error) {
+        console.error("Error in get groups", error);
+        return res.status(500).json({ error: error.message });
+    }
+})
 
 router.post("/groups/addUsers", protectedRoute, async(req, res)=>{
     const user = req.user;
@@ -131,6 +195,49 @@ router.post("/folders", protectedRoute, async(req, res)=>{
         return res.status(500).json({ error: error.message });
     }
 });
+
+router.get("/folders", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    try {
+        const [result] = await db.execute("SELECT * FROM folders WHERE owner = ?", [user.username]);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Error in get folders", error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.post("/folders/addTasks", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {folder_name, ids} = req.body;
+    if (!folder_name || ids?.length == 0) return res.status(400).json({error: "Data missing"});
+
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
+    try {
+        const [result] = await connection.execute("SELECT * FROM folders WHERE name = ? AND owner = ?", [folder_name, user.username]);
+        if (result.length === 0) return res.status(400).json({error: "Folder not found"});
+
+        const idsToAdd = new Set(ids);
+        for (const id of idsToAdd){
+            const [verif] = await connection.execute("SELECT * FROM task_user WHERE id_task = ? AND username = ?", [id, user.username]);
+            if (verif.length === 0) return res.status(400).json({error: "Action not allowed"});
+
+            await connection.execute("UPDATE tasks SET folder_owner = ?, folder_name = ? WHERE id = ?", [user.username, folder_name, id]);
+        }
+        await connection.commit();
+        return res.status(200).json({message: ids.length > 1 ? `Tasks added to ${folder_name}` : `Task added to ${folder_name}`});
+    } catch (error) {
+        console.error("Error in post addTasks", error);
+        return res.status(500).json({ error: error.message });
+    } finally {
+        connection.release();
+    }
+});
+
+router.get("/health", protectedRoute, (req, res)=>{
+    res.status(200).json({message: "health"});
+})
 
 router.post("/dev/reset", async(req, res)=>{
     try {
