@@ -34,10 +34,6 @@ const showTaskPopup = ref(false)
       <p v-if="task.id % 2 === 1">Important</p>
     </div>
 
-    <TaskPopup 
-      :show="showTaskPopup" 
-      :task="task" 
-      @close="showTaskPopup = false"
-    />
+    <TaskPopup :show="showTaskPopup" :task="task" @close="showTaskPopup = false" />
   </div>
 </template>

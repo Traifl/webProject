@@ -81,9 +81,9 @@ router.put("/tasks", protectedRoute, async(req, res)=>{
 router.put("/tasks/update", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {id, } = req.body;
-
 });
 
+// peut etre pas delete mais genre status invisible
 router.delete("/tasks", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {id} = req.body;
@@ -98,7 +98,7 @@ router.delete("/tasks", protectedRoute, async(req, res)=>{
         console.error("Error in delete tasks: ", error);
         return res.status(500).json({ error: error.message });
     }
-})
+});
 
 router.get("/tasks", protectedRoute, async(req, res)=>{
     const user = req.user;
@@ -303,7 +303,7 @@ router.post("/dev/reset", async(req, res)=>{
                 FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE 
             );`
         );
-        await connection.release();
+        connection.release();
         return res.status(200).json({message: "Database reset successfully"});
     } catch (error) {
      console.error("Error in database reset: ",error);

@@ -69,7 +69,7 @@ export const useAuthStore = defineStore('auth', {
         const res = await axiosInstance.get('/auth/check');
         this.user = res.data;
       } catch (error) {
-        
+        toast.show('error', error.response?.data?.error)
       }
     },
     async logout(){
@@ -79,7 +79,17 @@ export const useAuthStore = defineStore('auth', {
         this.user = null;
         toast.show('success', res.data.message);
       } catch (error) {
-        toast.show('error', error.response?.data?.error)
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async updateUser(username){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.put("/auth/update", {username});
+        this.user = res.data.user;
+        toast.show('success', res.data.message)
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
       }
     }
   }
@@ -118,6 +128,7 @@ export const useGlobalStore = defineStore('global', {
         
         const index = this.tasks.findIndex(task=>task.id === id);
         if (index !== -1) this.tasks.splice(index, 1, updatedTask);
+        this.tasks.sort((a, b) => order[a.status] - order[b.status]);
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
@@ -125,8 +136,7 @@ export const useGlobalStore = defineStore('global', {
     async deleteTask(id){
       const toast = useToastStore();
       try {
-        const res = await axiosInstance.delete('/tasks', {data: {id}});
-        console.log(res.data);
+        await axiosInstance.delete('/tasks', {data: {id}});
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }

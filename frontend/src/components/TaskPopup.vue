@@ -1,18 +1,19 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { defineProps, defineEmits, ref } from 'vue'
 import { TrashIcon } from '@heroicons/vue/24/outline'
 import { useGlobalStore } from '@/store'
 
 const props = defineProps({
   show: Boolean,
   task: Object
-})
+});
 
-const emit = defineEmits(['close'])
+const global = useGlobalStore();
 
-const global = useGlobalStore()
+const emit = defineEmits(['close']);
+const close = () => emit('close');
 
-const close = () => emit('close')
+const data = ref({title: '', status: ''});
 
 const handleDelete = async () => {
   if (confirm(`Delete task "${props.task.title}" ?`)) {
@@ -20,7 +21,8 @@ const handleDelete = async () => {
     close();
     await global.fetchTasks();
   }
-}
+};
+
 </script>
 
 <template>
@@ -38,8 +40,14 @@ const handleDelete = async () => {
       </header>
 
       <div class="text-gray-700 leading-6">
-        <p><span class="font-bold">Title :</span> {{ task.title }}</p>
-        <p><span class="font-bold">Status :</span> {{ task.status }}</p>
+        <div class="flex flex-row gap-1">
+          <p class="font-bold">Title :</p>
+          <input type="text" :placeholder="task.title" :v-model="data.title">
+        </div>
+        <div class="flex flex-row gap-1">
+          <p class="font-bold">Status :</p>
+          <input type="text" :placeholder="task.status" :v-model="data.status">
+        </div>
         <p><span class="font-bold">Date :</span> {{ new Date(task.date).toUTCString().split('2025')[0] }}</p>
 
         <template v-if="task.folder_name">
@@ -51,12 +59,13 @@ const handleDelete = async () => {
         </template>
       </div>
 
-      <footer class="flex justify-end mt-6">
-        <button 
-          class="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded cursor-pointer"
-          @click="close"
-        >
-          Close
+      <footer class="flex justify-between mt-4">
+        <button class="bg-blue-300 hover:bg-blue-400 px-3 py-1 rounded cursor-pointer" @click="close">
+          <p>Edit</p>
+        </button>
+
+        <button class="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded cursor-pointer" @click="close">
+          <p>Close</p>
         </button>
       </footer>
     </div>

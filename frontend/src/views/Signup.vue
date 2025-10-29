@@ -1,24 +1,18 @@
 <script setup>
 import { ref } from 'vue';
-import { axiosInstance } from '../lib/axios';
-import Toast from '@/components/Toast.vue';
 import { useRouter } from 'vue-router';
 import { UserIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
+import { useAuthStore } from '../store';
 
 const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
-const toast = ref({ type: '', message: '' });
 const router = useRouter();
+const auth = useAuthStore();
 
 const handleSignup = async () => {
-  try {
-    const res = await axiosInstance.post('/auth/signup', { username: username.value, password: password.value },);
-    toast.show('success', res.data.message);
-    router.push('/accueil');
-  } catch (error) {
-    error.response?.status === 500 ? toast.show('warning', error.response?.data?.error || 'Server error') : toast.show('error', error.response?.data?.error);
-  }
+    const {success} = await auth.signup({ username: username.value, password: password.value });
+    if (success) router.push('/home');
 };
 
 const toggleShowPassword = ()=>{
@@ -46,7 +40,7 @@ const toggleShowPassword = ()=>{
                 </div>
             </div>
             <div class="flex justify-center items-center">
-                <button type="submit" class="bg-zinc-400 rounded border cursor-pointer p-2">Sign up</button>
+                <button type="submit" class="bg-zinc-400 rounded p-1 border cursor-pointer" :disabled="auth.isLoading">{{ auth.isLoading ? "Loading..." : "Signup" }}</button>
             </div>
         </form>
   

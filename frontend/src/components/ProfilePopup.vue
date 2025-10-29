@@ -1,17 +1,25 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue'
-import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { useAuthStore } from '@/store'
+import { defineProps, defineEmits, ref } from 'vue';
+import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { useAuthStore } from '@/store';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   show: Boolean,
-})
+});
 
-const emit = defineEmits(['close'])
+const username = ref('')
 
-const auth = useAuthStore()
+const router = useRouter();
+const auth = useAuthStore();
 
-const close = () => emit('close')
+const emit = defineEmits(['close']);
+const close = () => emit('close');
+
+const handleLogout = async()=>{
+  await auth.logout();
+  router.push('/');
+};
 
 </script>
 
@@ -24,21 +32,23 @@ const close = () => emit('close')
     <div class="bg-white rounded-lg p-6 min-w-[300px] max-w-[500px] shadow-xl">
         <header class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold">Profile</h2>
-            <button @click="close">
+            <button @click="close" class="cursor-pointer">
                 <XMarkIcon class="size-5 text-gray-500 hover:text-gray-700"/>
             </button>
         </header>
 
         <div class="text-gray-700 leading-6">
-            <p>caca</p>
+          <p>Username</p>
+          <input type="text" :placeholder="auth.user.username" class="rounded" v-model="username">
         </div>
 
-      <footer class="flex justify-end mt-6">
-        <button 
-          class="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded cursor-pointer"
-          @click="close"
-        >
-          Close
+      <footer class="flex justify-between mt-4">
+        <button class="bg-blue-300 hover:bg-blue-400 px-3 py-1 rounded cursor-pointer" @click="auth.updateUser(username)">
+          <p>Edit</p>
+        </button>
+
+        <button class="px-3 py-1 rounded cursor-pointer bg-red-400 hover:bg-red-500" @click="handleLogout">
+          <p>Logout</p>
         </button>
       </footer>
     </div>
