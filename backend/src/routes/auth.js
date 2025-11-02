@@ -11,11 +11,11 @@ router.post('/signup', async(req, res)=>{
     if (!username || !password) return res.status(400).json({error: "All fields are required"});
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        await db.execute("INSERT INTO users (username, password) VALUES (?, ?)", [username, hashedPassword]);
+        await db.execute("INSERT INTO user (username, password) VALUES (?, ?)", [username, hashedPassword]);
 
         const token = generateToken(username);
         res.cookie("token", token, {httpOnly: true, secure: false});
-        return res.status(201).json({message: "User created successfully", user: {username: user.username}});
+        return res.status(201).json({message: "User created successfully", user: {username}});
     } catch (error) {
         if (error.code === "ER_DUP_ENTRY") return res.status(400).json({error: "User already exists"});
         console.log("Error in signup: ", error);
@@ -27,7 +27,7 @@ router.post('/login', async(req, res)=>{
     const {username, password} = req.body;
     if (!username || !password) return res.status(400).json({error: "All fields are required"});
     try {
-        const [rows] = await db.execute("SELECT * FROM users where username = ?", [username]);
+        const [rows] = await db.execute("SELECT * FROM user where username = ?", [username]);
         const user = rows[0];
         if (!user) return res.status(400).json({error: "Invalid credentials"});
 
@@ -60,10 +60,10 @@ router.put('/update', protectedRoute, async(req, res)=>{
     if (username === user.username) return res.status(400).json({error: "No modification"});
 
     try {
-        const [result] = await db.execute("SELECT * FROM users WHERE username = ?", [username]);
+        const [result] = await db.execute("SELECT * FROM user WHERE username = ?", [username]);
         if (result.length) return res.status(400).json({error: "Username already taken"});
 
-        await db.execute("UPDATE users SET username = ? WHERE username = ?", [username, user.username]);
+        await db.execute("UPDATE user SET username = ? WHERE username = ?", [username, user.username]);
         user.username = username;
 
         const token = generateToken(username);

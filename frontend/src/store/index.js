@@ -114,7 +114,7 @@ export const useGlobalStore = defineStore('global', {
     async fetchTasks(){
       const toast = useToastStore();
       try {
-        const res = await axiosInstance.get('/tasks');
+        const res = await axiosInstance.get('/task');
         this.tasks = res.data.sort((a, b)=>order[a.status] - order[b.status]);
       } catch (error) {
         toast.show('error', error.response?.data?.error);
@@ -123,7 +123,7 @@ export const useGlobalStore = defineStore('global', {
     async editTask(id){
       const toast = useToastStore();
       try {
-        const res = await axiosInstance.put('/tasks', {id});
+        const res = await axiosInstance.put('/task', {id});
         const updatedTask = res.data;
         
         const index = this.tasks.findIndex(task=>task.id === id);
@@ -136,7 +136,7 @@ export const useGlobalStore = defineStore('global', {
     async deleteTask(id){
       const toast = useToastStore();
       try {
-        await axiosInstance.delete('/tasks', {data: {id}});
+        await axiosInstance.delete('/task', {data: {id}});
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
@@ -144,7 +144,7 @@ export const useGlobalStore = defineStore('global', {
     async fetchFolders(){
       const toast = useToastStore();
       try {
-        const res = await axiosInstance.get('/folders');
+        const res = await axiosInstance.get('/folder');
         this.folders = res.data;
       } catch (error) {
         toast.show('error', error.response?.data?.error);
@@ -153,7 +153,7 @@ export const useGlobalStore = defineStore('global', {
     async fetchGroups(){
       const toast = useToastStore();
       try {
-        const res = await axiosInstance.get('/groups');
+        const res = await axiosInstance.get('/group');
         this.groups = res.data;
       } catch (error) {
         toast.show('error', error.response?.data?.error);

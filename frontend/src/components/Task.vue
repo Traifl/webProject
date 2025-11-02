@@ -11,7 +11,7 @@ const showTaskPopup = ref(false)
 </script>
 
 <template>
-  <div class="py-1.5 px-2 bg-zinc-400 m-1 max-w-64 rounded flex flex-col gap-1.5" :key="task.id">
+  <div class="py-1.5 px-2 bg-zinc-400 m-1 max-w-64 rounded flex flex-col" :key="task.id">
     <div class="flex flex-row items-center justify-between">
       <div class="flex flex-row items-center gap-1">
         <button
@@ -28,10 +28,11 @@ const showTaskPopup = ref(false)
 
     <div>
       <p>{{ task.status }}</p>
-      <p>{{ new Date(task.date).toUTCString().split('2025')[0] }}</p>
+      <p v-if="task.description">{{ task.description }}</p>
+      <p v-if="task.deadline">{{ new Date(task.deadline).toUTCString().split('2025')[0] }}</p>
+      <p v-if="task.priority">{{ task.priority }}</p>
       <p v-if="task.folder_name">{{ task.folder_name }}</p>
-      <p v-else-if="task.id_group">{{ task.id_group }}</p>
-      <p v-if="task.id % 2 === 1">Important</p>
+      <p v-else-if="task.group_name">{{ task.group_name }}</p>
     </div>
 
     <TaskPopup :show="showTaskPopup" :task="task" @close="showTaskPopup = false" />

@@ -20,7 +20,7 @@ onMounted(async()=>{
 
 const filteredTasks = computed(() => {
   if (selectedBinder.value === 'All tasks') return global.tasks;
-  return global.tasks.filter(task => task.folder_name === selectedBinder.value || task.id_group === selectedBinder.value);
+  return global.tasks.filter(task => task.folder_name === selectedBinder.value || task.group_name === selectedBinder.value);
 });
 </script>
 

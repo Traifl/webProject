@@ -42,11 +42,11 @@ const handleDelete = async () => {
       <div class="text-gray-700 leading-6">
         <div class="flex flex-row gap-1">
           <p class="font-bold">Title :</p>
-          <input type="text" :placeholder="task.title" :v-model="data.title">
+          <input type="text" :placeholder="task.title" :v-model="data.title" :value="task.title">
         </div>
         <div class="flex flex-row gap-1">
           <p class="font-bold">Status :</p>
-          <input type="text" :placeholder="task.status" :v-model="data.status">
+          <input type="text" :placeholder="task.status" :v-model="data.status" :value="task.status">
         </div>
         <p><span class="font-bold">Date :</span> {{ new Date(task.date).toUTCString().split('2025')[0] }}</p>
 

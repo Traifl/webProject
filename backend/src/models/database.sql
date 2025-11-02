@@ -1,51 +1,62 @@
-CREATE TABLE users (
-    username VARCHAR(100) PRIMARY KEY,
+CREATE TABLE user (
+    username VARCHAR(50) PRIMARY KEY,
     password VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE folders (
-    name VARCHAR(255) NOT NULL,
+CREATE TABLE folder (
+    name VARCHAR(100),
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    owner VARCHAR(100) NOT NULL,
-    PRIMARY KEY (owner, name),
-    FOREIGN KEY (owner) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+    username VARCHAR(50) NOT NULL,
+    PRIMARY KEY (name, username),
+    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE `groups` (
+CREATE TABLE group (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    owner VARCHAR(100) NOT NULL,
-    FOREIGN KEY (owner) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+    username VARCHAR(50) NOT NULL,
+    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE group_user (
-    id_group INT NOT NULL,
-    username VARCHAR(100) NOT NULL,
-    PRIMARY KEY (id_group, username),
-    FOREIGN KEY (id_group) REFERENCES `groups`(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+    username VARCHAR(50),
+    group_id INT,
+    PRIMARY KEY (username, group_id),
+    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES group(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE tasks (
+CREATE TABLE task (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(100) NOT NULL,
     description TEXT,
-    status VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    deadline DATE,
+    priority VARCHAR(20),
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    id_group INT,
-    folder_owner VARCHAR(100),
-    folder_name VARCHAR(255),
-    FOREIGN KEY (id_group) REFERENCES `groups`(id) ON DELETE SET NULL ON UPDATE CASCADE,
-    FOREIGN KEY (folder_owner, folder_name) REFERENCES folders(owner, name) ON DELETE SET NULL ON UPDATE CASCADE
+    folder_name VARCHAR(100),
+    folder_username VARCHAR(50),
+    group_id INT,
+    FOREIGN KEY (folder_name, folder_username) REFERENCES folder(name, username) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES group(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE task_user (
-    id_task INT NOT NULL,
-    username VARCHAR(100) NOT NULL,
-    PRIMARY KEY (id_task, username),
-    FOREIGN KEY (id_task) REFERENCES tasks(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE 
+    username VARCHAR(50),
+    task_id INT,
+    PRIMARY KEY (username, task_id),
+    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-SHOW TABLES;
+CREATE TABLE message (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    content TEXT NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    group_id INT NOT NULL,
+    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES group(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
