@@ -1,6 +1,6 @@
 <script setup>
 import { defineProps, defineEmits, ref } from 'vue';
-import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'vue-router';
 
@@ -37,9 +37,9 @@ const handleLogout = async()=>{
             </button>
         </header>
 
-        <div class="text-gray-700 leading-6">
-          <p>Username</p>
-          <input type="text" :placeholder="auth.user.username" class="rounded" v-model="username">
+        <div>
+          <label class="block text-sm font-medium">Username</label>
+          <input v-model="title" type="text" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" required :placeholder="auth.user.username"/>
         </div>
 
       <footer class="flex justify-between mt-4">

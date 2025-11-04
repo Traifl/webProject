@@ -81,12 +81,27 @@ router.put("/task", protectedRoute, async(req, res)=>{
     }
 });
 
+//route not finished
 router.put("/task/update", protectedRoute, async(req, res)=>{
     const user = req.user;
-    const {id, } = req.body;
+    const {id, title, description, status, deadline, priority, folder_name, group_id, usernames} = req.body.data;
+    if (!id) return res.status(400).json({error: "Missing id"});
+    try {
+        let [currentTask] = await db.execute("SELECT * FROM task JOIN task_user ON task.id = task_user.task_id WHERE task.id = ? AND task_user.username = ?", [id, user.username]);
+        if (currentTask.length === 0) return res.status(400).json({error: "Action not allowed"});
+        currentTask = currentTask[0];
+        if (folder_name){
+            const [verifFolder] = await db.execute("SELECT * FROM folder WHERE name = ? AND username = ?", [folder_name, user.username]);
+            if (verifFolder.length === 0) return res.status(400).json({error: "Folder not found"});
+            await db.execute("UPDATE task SET title = ?, description = ?, status = ?, deadline = ?, priority = ?, folder_name = ?, folder_username = ? WHERE id = ?", [title === currentTask.title ? title : currentTask.title, description === currentTask.description ? description : currentTask.description, status === currentTask.status ? status : currentTask.status, deadline === currentTask.deadline ? deadline : currentTask.deadline, priority === currentTask.priority ? priority : currentTask.priority, folder_name === currentTask.folder_name ? folder_name : currentTask.folder_name, user.username, id]);
+        }
+        return res.status(200).json({message: "pipi"});
+    } catch (error) {
+        console.error("Error in task update: ", error);
+        return res.status(500).json({ error: error.message });
+    }
 });
 
-// peut etre pas delete mais genre status invisible
 router.delete("/task", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {id} = req.body;
@@ -116,14 +131,14 @@ router.get("/task", protectedRoute, async(req, res)=>{
         } else {
             [result] = await db.execute("SELECT task.*, `group`.name AS group_name, `group`.id AS group_id FROM task JOIN task_user ON task.id = task_user.task_id LEFT JOIN `group` ON task.group_id = `group`.id WHERE task_user.username = ?", [user.username]);
         }
-        console.log(result);
+        return res.status(200).json(result);
     } catch (error) {
         console.error("Error in get task: ", error);
         return res.status(500).json({ error: error.message });
     }
 });
 
-// pour l'instant on sépare créer le groupe et ajouter les gens, on rajoute seulement la personne qui a crée le groupe automatqieuement
+// for now we seperate creating group and adding people to the group, we only add the user who created the group
 router.post("/group", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {name} = req.body;
@@ -170,7 +185,6 @@ router.post("/group/addUsers", protectedRoute, async(req, res)=>{
 
         const usersToAdd = new Set(usernames);
         for (const username of usersToAdd){
-            //rajouter une verification ici !!!
             await connection.execute("INSERT INTO group_user (group_id, username) VALUES (?, ?)", [id_group, username]);
         }
 
@@ -178,7 +192,7 @@ router.post("/group/addUsers", protectedRoute, async(req, res)=>{
         return res.status(200).json({group, usernames});
     } catch (error) {
         await connection.rollback();
-        if (error.code === "ER_NO_REFERENCED_ROW_2") return res.status(400).json({error: "SQL error"}); // soit qu'un des usernames n'existe pas 
+        if (error.code === "ER_NO_REFERENCED_ROW_2") return res.status(400).json({error: "SQL error"}); // add verification
         if (error.code === "ER_DUP_ENTRY") return res.status(400).json({error: "User already in the group"})
         console.error(error);
         return res.status(500).json({ error: error.message });

@@ -42,6 +42,9 @@ const toggleShowPassword = ()=>{
             <div class="flex justify-center items-center">
                 <button type="submit" class="bg-zinc-400 rounded p-1 border cursor-pointer" :disabled="auth.isLoading">{{ auth.isLoading ? "Loading..." : "Signup" }}</button>
             </div>
+            <footer class="flex justify-center mt-2">
+                <p class="text-xs">Already have an account ? <RouterLink to="/login"><strong>Login</strong></RouterLink></p>
+            </footer>
         </form>
   
     </div>

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { axiosInstance } from "@/lib/axios";
 
 const order = {'to do': 0, 'doing': 1, 'done': 2};
+const priority = {'low': 0, 'mid': 1, 'high': 2};
 
 export const useToastStore = defineStore('toast', {
     state: () => ({
@@ -111,6 +112,15 @@ export const useGlobalStore = defineStore('global', {
         toast.show('error', error.response?.data?.error);
       }
     },
+    async createTask(data){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.post('/task', data);
+        toast.show('success', res.data.message);
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
     async fetchTasks(){
       const toast = useToastStore();
       try {
@@ -120,7 +130,7 @@ export const useGlobalStore = defineStore('global', {
         toast.show('error', error.response?.data?.error);
       }
     },
-    async editTask(id){
+    async editStatus(id){
       const toast = useToastStore();
       try {
         const res = await axiosInstance.put('/task', {id});
@@ -131,6 +141,14 @@ export const useGlobalStore = defineStore('global', {
         this.tasks.sort((a, b) => order[a.status] - order[b.status]);
       } catch (error) {
         toast.show('error', error.response?.data?.error);
+      }
+    },
+    async editTask(data){
+      const toast = useToastStore();
+      try {
+        await axiosInstance.put('/task/update', {data});
+      } catch (error) {
+        toast.show('error', error.response?.data?.error); 
       }
     },
     async deleteTask(id){

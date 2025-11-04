@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import { UserIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '../store';
 
@@ -42,6 +42,9 @@ const toggleShowPassword = ()=>{
             <div class="flex justify-center items-center">
                 <button type="submit" class="bg-zinc-400 rounded p-1 border cursor-pointer" :disabled="auth.isLoading">{{ auth.isLoading ? "Loading..." : "Login" }}</button>
             </div>
+            <footer class="flex justify-center mt-2">
+                <p class="text-xs">Don't have an account ? <RouterLink to="/signup"><strong>Sign up now</strong></RouterLink></p>
+            </footer>
         </form>
     </div>
 </template>

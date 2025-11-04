@@ -17,7 +17,7 @@ const showTaskPopup = ref(false)
         <button
           class="size-5 rounded-full cursor-pointer"
           :class="task.status === 'done' ? 'bg-lime-300' : task.status === 'doing' ? 'bg-amber-300' : 'bg-red-400'"
-          @click="global.editTask(task.id)"
+          @click="global.editStatus(task.id)"
         ></button>
         <p class="font-bold">{{ task.title }}</p>
       </div>
