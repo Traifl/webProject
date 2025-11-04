@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, ref, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useGlobalStore } from '@/store'
 
@@ -9,7 +9,7 @@ const props = defineProps({
 
 const global = useGlobalStore()
 
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits(['close'])
 const close = () => emit('close')
 
 const title = ref('')

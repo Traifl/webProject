@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, ref } from 'vue'
+import { ref } from 'vue'
 import { TrashIcon } from '@heroicons/vue/24/outline'
 import { useGlobalStore } from '@/store'
 

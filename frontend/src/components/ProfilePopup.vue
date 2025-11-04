@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, ref } from 'vue';
+import { ref } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'vue-router';

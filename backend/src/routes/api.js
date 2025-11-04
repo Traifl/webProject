@@ -108,9 +108,13 @@ router.delete("/task", protectedRoute, async(req, res)=>{
     if (!id) return res.status(400).json({error: "Data missing"});
     try {
         const [result] = await db.execute("SELECT * FROM task JOIN task_user ON task.id = task_user.task_id WHERE task.id = ?", [id]);
-        if (result.length === 0 || result[0].username !== user.username) return res.status(400).json({error: "Not allowed"});
-
-        await db.execute("DELETE FROM task WHERE id = ?", [id]);
+        if (result.length === 0) return res.status(400).json({error: "Not allowed"});
+        if (result.length > 1){
+            const [verif] = await db.execute("SELECT * FROM task JOIN task_user ON task.id = task_user.task_id WHERE task.id = ? AND task_user.username = ? ", [id, user.username]);
+            if (verif.length === 0) return res.status(400).json({error: "Not allowed"});
+            await db.execute("DELETE FROM task_user WHERE task_id = ? AND username = ?", [id, user.username]);
+        } else if(result[0].username !== user.username) return res.status(400).json({error: "Not allowed"});
+        else await db.execute("DELETE FROM task WHERE id = ?", [id]);
         return res.status(200).json({message: `Task ${id} deleted`});
     } catch (error) {
         console.error("Error in delete task: ", error);
