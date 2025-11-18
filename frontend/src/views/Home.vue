@@ -6,7 +6,7 @@ import SideBar from '@/components/SideBar.vue';
 import Task from '@/components/Task.vue';
 import NewTask from '@/components/NewTask.vue';
 import { PlusCircleIcon } from '@heroicons/vue/24/solid'
-import { AdjustmentsHorizontalIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { AdjustmentsHorizontalIcon, Cog6ToothIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import NewFolder from '@/components/NewFolder.vue';
 import NewGroup from '@/components/NewGroup.vue';
 
@@ -49,7 +49,8 @@ const filteredTasks = computed(() => {
             <AdjustmentsHorizontalIcon class="size-5" />
             <p>Filter</p>
           </div>
-          <div v-if="selectedBinder" class="flex flex-row bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between w-20 hover:bg-zinc-500 transition" @click="">
+          <div v-if="selectedBinder !== 'All tasks'" class="flex flex-row gap-3 bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between hover:bg-zinc-500 transition" @click="">
+            <Cog6ToothIcon class="size-5"/>
             <p>{{ selectedBinder }}</p>
           </div>
         </div>
