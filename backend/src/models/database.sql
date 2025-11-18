@@ -11,7 +11,7 @@ CREATE TABLE folder (
     FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE group (
+CREATE TABLE `group` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -25,7 +25,7 @@ CREATE TABLE group_user (
     group_id INT,
     PRIMARY KEY (username, group_id),
     FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES group(id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (group_id) REFERENCES `group`(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE task (
@@ -40,7 +40,7 @@ CREATE TABLE task (
     folder_username VARCHAR(50),
     group_id INT,
     FOREIGN KEY (folder_name, folder_username) REFERENCES folder(name, username) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES group(id) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (group_id) REFERENCES `group`(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE task_user (
@@ -58,5 +58,5 @@ CREATE TABLE message (
     username VARCHAR(50) NOT NULL,
     group_id INT NOT NULL,
     FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES group(id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (group_id) REFERENCES `group`(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
