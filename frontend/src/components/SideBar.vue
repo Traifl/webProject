@@ -8,10 +8,6 @@ const global = useGlobalStore();
 const emit = defineEmits(['select-binder']);
 const selectedBinder = ref('All tasks');
 
-const createFolder = ()=>{
-    alert('create folder');
-}
-
 const createGroup = ()=>{
     alert('create group');
 }
@@ -42,7 +38,7 @@ onMounted(async()=>{
                 </button>
             </div>
 
-            <NewButton label="New Folder" :action="createFolder"/>
+            <NewButton label="New Folder" @click="global.showNewFolder = true"/>
         </div>
 
         <div>
@@ -52,7 +48,7 @@ onMounted(async()=>{
                     <p :class="selectedBinder === group.name ? 'bg-gray-500 rounded' : '' ">{{ group.name }}</p>
                 </button>
             </div>
-            <NewButton label="New Group" :action="createGroup"/>
+            <NewButton label="New Group" @click="global.showNewGroup = true"/>
         </div>
     </div>
 </template>

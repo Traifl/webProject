@@ -6,7 +6,9 @@ import SideBar from '@/components/SideBar.vue';
 import Task from '@/components/Task.vue';
 import NewTask from '@/components/NewTask.vue';
 import { PlusCircleIcon } from '@heroicons/vue/24/solid'
-import { AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { AdjustmentsHorizontalIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import NewFolder from '@/components/NewFolder.vue';
+import NewGroup from '@/components/NewGroup.vue';
 
 const showSideBar = ref(true);
 const showNewTask = ref(false);
@@ -47,11 +49,16 @@ const filteredTasks = computed(() => {
             <AdjustmentsHorizontalIcon class="size-5" />
             <p>Filter</p>
           </div>
+          <div v-if="selectedBinder" class="flex flex-row bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between w-20 hover:bg-zinc-500 transition" @click="">
+            <p>{{ selectedBinder }}</p>
+          </div>
         </div>
 
         <Task v-for="task in filteredTasks" :key="task.id" :task="task"/>
       </div>
     </div>
     <NewTask :show="showNewTask" @close="showNewTask = false" />
+    <NewFolder @close="global.showNewFolder = false"/>
+    <NewGroup @close="global.showNewGroup = false" />
   </div>
 </template>

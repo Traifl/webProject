@@ -100,7 +100,9 @@ export const useGlobalStore = defineStore('global', {
   state: ()=>({
     tasks: [],
     folders: [],
-    groups: []
+    groups: [],
+    showNewFolder: false,
+    showNewGroup: false,
   }),
   actions: {
     async health(){
@@ -175,6 +177,26 @@ export const useGlobalStore = defineStore('global', {
         this.groups = res.data;
       } catch (error) {
         toast.show('error', error.response?.data?.error);
+      }
+    },
+    async createFolder(data){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.post('/folder', data);
+        toast.show('success', res.data.message);
+      } catch (error) {
+        toast.show('error', error.response?.data?.error || 'caca');
+        console.log(error);
+      }
+    },
+    async createGroup(data){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.post('/group', data);
+        toast.show('success', res.data.message);
+      } catch (error) {
+        toast.show('error', error.response?.data?.error || 'caca');
+        console.log(error);
       }
     }
   }

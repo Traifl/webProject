@@ -9,8 +9,12 @@ const props = defineProps({
 
 const global = useGlobalStore()
 
-const emit = defineEmits(['close'])
-const close = () => emit('close')
+const emit = defineEmits(['close']);
+
+const close = () => {
+  resetFields();
+  emit('close')
+}
 
 const title = ref('')
 const description = ref('')
@@ -34,7 +38,18 @@ watch(group_id, (newVal) => {
   if (newVal) {
     folder_name.value = ''
   }
-})
+});
+
+const resetFields = ()=>{
+  title.value = '';
+  description.value = '';
+  status.value = '';
+  deadline.value = '';
+  priority.value = '';
+  folder_name.value = '';
+  group_id.value = '';
+  usernames.value = '';
+};
 
 const handleSubmit = async() => {
   if (!title.value || !status.value) {
@@ -53,8 +68,7 @@ const handleSubmit = async() => {
     usernames: isGroupSelected.value && usernames.value
       ? usernames.value.split(',').map(u => u.trim())
       : null,
-  }
-  console.log(data)
+  }  
   await global.createTask(data);
   await global.fetchTasks();
   close()
@@ -79,12 +93,12 @@ const handleSubmit = async() => {
       <form @submit.prevent="handleSubmit" class="flex flex-col gap-0.5 text-gray-700">
         <div>
           <label class="block text-sm font-medium">Title *</label>
-          <input v-model="title" type="text" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" required />
+          <input v-model="title" type="text" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" required placeholder="Enter title"/>
         </div>
 
         <div>
           <label class="block text-sm font-medium">Description</label>
-          <textarea v-model="description" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" rows="1"></textarea>
+          <textarea v-model="description" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" rows="1" placeholder="Enter description"></textarea>
         </div>
 
         <div>

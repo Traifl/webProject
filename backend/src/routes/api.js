@@ -145,10 +145,10 @@ router.get("/task", protectedRoute, async(req, res)=>{
 // for now we seperate creating group and adding people to the group, we only add the user who created the group
 router.post("/group", protectedRoute, async(req, res)=>{
     const user = req.user;
-    const {name} = req.body;
+    const {name, description} = req.body;
     if (!name) return res.status(400).json({error: "Group's name missing"});
     try {
-        const [result] = await db.execute("INSERT INTO `group` (name, username) VALUES (?, ?)", [name, user.username]);
+        const [result] = await db.execute("INSERT INTO `group` (name, description, username) VALUES (?, ?, ?)", [name, description || null, user.username]);
         await db.execute("INSERT INTO group_user (group_id, username) VALUES (?, ?)", [result.insertId, user.username]);
         return res.status(201).json({message: "Group created successfully", group:{id: result.insertId, name, createdBy: user.username}});
     } catch (error) {

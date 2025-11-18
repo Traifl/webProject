@@ -23,7 +23,7 @@ const showProfilePop = ref(false);
     </div>
 
     <div class="rounded-2xl px-2 py-1 border flex flex-row justify-end gap-5 items-center">
-      <input v-model="search" type="text" placeholder="Search" />
+      <input v-model="search" type="text" placeholder="Search" class="w-full rounded-md focus:outline-none"/>
       <button class="cursor-pointer">
         <MagnifyingGlassIcon class="size-5" />
       </button>
