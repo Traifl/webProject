@@ -5,55 +5,73 @@ import { useGlobalStore } from '@/store'
 
 const props = defineProps({
   show: Boolean,
+  selectedBinder: Object
 })
 
+const emit = defineEmits(['close'])
 const global = useGlobalStore()
-
-const emit = defineEmits(['close']);
-
-const close = () => {
-  resetFields();
-  emit('close')
-}
 
 const title = ref('')
 const description = ref('')
 const status = ref('')
 const deadline = ref('')
 const priority = ref('')
+const usernames = ref('')
+
 const folder_name = ref('')
 const group_id = ref('')
-const usernames = ref('')
+
+watch(
+  () => props.selectedBinder,
+  (binder) => {
+    if (!binder) return;
+
+    if (binder.id) {
+      group_id.value = binder.id;
+      folder_name.value = '';
+    } else if (binder.id === 0){
+      folder_name.value = '';
+      group_id.value = '';
+    } else{
+      folder_name.value = binder.name;
+      group_id.value = '';
+    }
+  },
+  { immediate: true }
+)
 
 const isGroupSelected = computed(() => group_id.value !== '')
 
 watch(folder_name, (newVal) => {
-  if (newVal) {
+  if (newVal !== '') {
     group_id.value = ''
     usernames.value = ''
   }
 })
 
 watch(group_id, (newVal) => {
-  if (newVal) {
+  if (newVal !== '') {
     folder_name.value = ''
   }
-});
+})
 
-const resetFields = ()=>{
-  title.value = '';
-  description.value = '';
-  status.value = '';
-  deadline.value = '';
-  priority.value = '';
-  folder_name.value = '';
-  group_id.value = '';
-  usernames.value = '';
-};
+const resetFields = () => {
+  title.value = ''
+  description.value = ''
+  status.value = ''
+  deadline.value = ''
+  priority.value = ''
+  usernames.value = ''
+}
 
-const handleSubmit = async() => {
+const close = () => {
+  resetFields()
+  emit('close')
+}
+
+const handleSubmit = async () => {
   if (!title.value || !status.value) {
-    alert('Title and status are mandatory');
+    alert('Title and status are mandatory')
     return
   }
 
@@ -64,17 +82,17 @@ const handleSubmit = async() => {
     deadline: deadline.value || null,
     priority: priority.value || null,
     folder_name: folder_name.value || null,
-    group_id: group_id.value || null,
+    group_id: group_id.value !== '' ? group_id.value : null,
     usernames: isGroupSelected.value && usernames.value
       ? usernames.value.split(',').map(u => u.trim())
       : null,
-  }  
-  await global.createTask(data);
-  await global.fetchTasks();
+  }
+
+  await global.createTask(data)
+  await global.fetchTasks()
   close()
 }
 </script>
-
 
 <template>
   <div 

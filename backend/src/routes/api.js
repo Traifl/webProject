@@ -87,15 +87,32 @@ router.put("/task/update", protectedRoute, async(req, res)=>{
     const {id, title, description, status, deadline, priority, folder_name, group_id, usernames} = req.body.data;
     if (!id) return res.status(400).json({error: "Missing id"});
     try {
-        let [currentTask] = await db.execute("SELECT * FROM task JOIN task_user ON task.id = task_user.task_id WHERE task.id = ? AND task_user.username = ?", [id, user.username]);
-        if (currentTask.length === 0) return res.status(400).json({error: "Action not allowed"});
-        currentTask = currentTask[0];
+        const [verifTask] = await db.execute("SELECT * FROM task JOIN task_user ON task.id = task_user.task_id WHERE task.id = ? AND task_user.username = ?", [id, user.username]);
+        if (verifTask.length === 0) return res.status(400).json({error: "Action not allowed"});
+        const current = verifTask[0];
+        
+        let newFolderName = null;
+        let newFolderUsername = null;
+        let newGroupId = null;
+        
         if (folder_name){
             const [verifFolder] = await db.execute("SELECT * FROM folder WHERE name = ? AND username = ?", [folder_name, user.username]);
             if (verifFolder.length === 0) return res.status(400).json({error: "Folder not found"});
-            await db.execute("UPDATE task SET title = ?, description = ?, status = ?, deadline = ?, priority = ?, folder_name = ?, folder_username = ? WHERE id = ?", [title === currentTask.title ? title : currentTask.title, description === currentTask.description ? description : currentTask.description, status === currentTask.status ? status : currentTask.status, deadline === currentTask.deadline ? deadline : currentTask.deadline, priority === currentTask.priority ? priority : currentTask.priority, folder_name === currentTask.folder_name ? folder_name : currentTask.folder_name, user.username, id]);
+            newFolderName = folder_name;
+            newFolderUsername = user.username;
+            newGroupId = null;
         }
-        return res.status(200).json({message: "pipi"});
+
+        if(group_id){
+            const [verifGroup] = await db.execute("SELECT * FROM group_user WHERE group_id = ? AND username = ?", [group_id, user.username]);
+            if (verifGroup.length === 0) return res.status(400).json({error: "Group not accessible"});
+            newFolderName = null;
+            newFolderUsername = null;
+            newGroupId = group_id;
+        }
+        
+        await db.execute("UPDATE task SET title = ?, description = ?, status = ?, deadline = ?, priority = ?, folder_name = ?, folder_username = ?, group_id = ? WHERE id = ?", [title || current.title, description || current.description, status || current.status, deadline || current.deadline, priority || current.priority, newFolderName, newFolderUsername, newGroupId, id]);
+        return res.status(200).json({message: "Task updated successfully"});
     } catch (error) {
         console.error("Error in task update: ", error);
         return res.status(500).json({ error: error.message });
@@ -115,7 +132,7 @@ router.delete("/task", protectedRoute, async(req, res)=>{
             await db.execute("DELETE FROM task_user WHERE task_id = ? AND username = ?", [id, user.username]);
         } else if(result[0].username !== user.username) return res.status(400).json({error: "Not allowed"});
         else await db.execute("DELETE FROM task WHERE id = ?", [id]);
-        return res.status(200).json({message: `Task ${id} deleted`});
+        return res.status(200).json({message: `Task ${id} deleted successfully`});
     } catch (error) {
         console.error("Error in delete task: ", error);
         return res.status(500).json({ error: error.message });
@@ -229,6 +246,21 @@ router.get("/folder", protectedRoute, async(req, res)=>{
         return res.status(500).json({ error: error.message });
     }
 });
+
+router.delete("/folder", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {folder_name} = req.body;
+    if (!folder_name) return res.status(400).json({error: "Data missing"});
+    try {
+        const [verifFolder] = await db.execute("SELECT * FROM folder WHERE name = ? AND username = ?", [folder_name, user.username]);
+        if (verifFolder.length === 0) return res.status(400).json({error: "Folder not found"});
+        await db.execute("DELETE FROM folder WHERE name = ? AND username = ?", [folder_name, user.username]);
+        return res.status(200).json({message: `Folder ${folder_name} deleted successfully`});
+    } catch (error) {
+        console.error("Error in delete folder", error);
+        return res.status(500).json({ error: error.message });
+    }
+})
 
 router.post("/folder/addTasks", protectedRoute, async(req, res)=>{
     const user = req.user;
