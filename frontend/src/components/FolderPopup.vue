@@ -13,7 +13,7 @@ const global = useGlobalStore()
 const emit = defineEmits(['close']);
 
 const close = () => {
-  //resetFields();
+  resetFields();
   emit('close')
 };
 
@@ -29,8 +29,14 @@ watch(
   { immediate: true }
 );
 
+const resetFields = ()=>{
+  name.value = props.folder.name;
+}
+
 const handleUpdate = async() => {
-  //update(data)
+  await global.editFolder({folder_name: props.folder.name, newFolder_name: name.value});
+  await global.fetchFolders();
+  await global.fetchTasks();
   close()
 };
 

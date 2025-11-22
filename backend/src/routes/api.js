@@ -236,6 +236,22 @@ router.post("/folder", protectedRoute, async(req, res)=>{
     }
 });
 
+router.put("/folder", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {folder_name, newFolder_name} = req.body.data;
+    if (!folder_name || !newFolder_name) return res.status(400).json({error: "Missing data"});
+    try {
+        const [verifFolder] = await db.execute("SELECT * FROM folder WHERE name = ? AND username = ?", [folder_name, user.username]);
+        if (verifFolder.length === 0) return res.status(400).json({error: "Folder not found"});
+
+        await db.execute("UPDATE folder SET name = ? WHERE name = ? AND username = ?", [newFolder_name, folder_name, user.username]);
+        return res.status(200).json({message: "Folder edited successfully"});
+    } catch (error) {
+        console.error("Error in put folder", error);
+        return res.status(500).json({ error: error.message });
+    }
+})
+
 router.get("/folder", protectedRoute, async(req, res)=>{
     const user = req.user;
     try {

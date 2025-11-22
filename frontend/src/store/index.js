@@ -148,7 +148,6 @@ export const useGlobalStore = defineStore('global', {
     async editTask(data){
       const toast = useToastStore();
       try {
-        console.log(data)
         const res = await axiosInstance.put('/task/update', {data});
         toast.show('success', res.data.message);
       } catch (error) {
@@ -203,6 +202,14 @@ export const useGlobalStore = defineStore('global', {
       const toast = useToastStore();
       try {
         await axiosInstance.delete('/folder', {data: {folder_name}});
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async editFolder(data){
+      const toast = useToastStore();
+      try {
+        await axiosInstance.put('/folder', {data})
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
