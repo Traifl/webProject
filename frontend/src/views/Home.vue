@@ -16,7 +16,6 @@ const showSideBar = ref(true);
 const showNewTask = ref(false);
 const showFolderDetails = ref(false);
 const showGroupDetails = ref(false);
-const selectedBinder = ref({name: 'All tasks', id: 0});
 
 const global = useGlobalStore();
 
@@ -28,9 +27,10 @@ onMounted(async()=>{
 })
 
 const filteredTasks = computed(() => {
-  if (selectedBinder.value.name === 'All tasks') return global.tasks;
-  return global.tasks.filter(task => task.folder_name === selectedBinder.value.name || task.group_id === selectedBinder.value.id);
+  if (global.selectedBinder.name === 'All tasks') return global.tasks;
+  return global.tasks.filter(task => task.folder_name === global.selectedBinder.name || task.group_id === global.selectedBinder.id);
 });
+
 </script>
 
 <template>
@@ -40,7 +40,6 @@ const filteredTasks = computed(() => {
     <div class="flex flex-row h-screen">
       <SideBar 
         v-if="showSideBar"
-        @select-binder="selectedBinder = $event"
       />      
 
       <div class="bg-gray-300 h-screen w-screen overflow-auto">
@@ -53,18 +52,18 @@ const filteredTasks = computed(() => {
             <AdjustmentsHorizontalIcon class="size-5" />
             <p>Filter</p>
           </div>
-          <div v-if="selectedBinder.name !== 'All tasks'" class="flex flex-row gap-2 bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between hover:bg-zinc-500 transition" @click="selectedBinder.id ? showGroupDetails = true : showFolderDetails = true">
+          <div v-if="global.selectedBinder.name !== 'All tasks'" class="flex flex-row gap-2 bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between hover:bg-zinc-500 transition" @click="global.selectedBinder.id ? showGroupDetails = true : showFolderDetails = true">
             <Cog6ToothIcon class="size-5"/>
-            <p>{{ selectedBinder.name }}</p>
+            <p>{{ global.selectedBinder.name }}</p>
           </div>
         </div>
 
         <Task v-for="task in filteredTasks" :key="task.id" :task="task"/>
       </div>
     </div>
-    <NewTask :show="showNewTask" @close="showNewTask = false" :selectedBinder="selectedBinder"/>
-    <FolderPopup :show="showFolderDetails" @close="showFolderDetails = false" :folder="selectedBinder"/>
-    <GroupPopup :show="showGroupDetails" @close="showGroupDetails = false" :group="selectedBinder"/>
+    <NewTask :show="showNewTask" @close="showNewTask = false" :selectedBinder="global.selectedBinder"/>
+    <FolderPopup :show="showFolderDetails" @close="showFolderDetails = false" :folder="global.selectedBinder"/>
+    <GroupPopup :show="showGroupDetails" @close="showGroupDetails = false" :group="global.selectedBinder"/>
     <NewFolder @close="global.showNewFolder = false"/>
     <NewGroup @close="global.showNewGroup = false" />
   </div>

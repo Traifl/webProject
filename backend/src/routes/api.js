@@ -16,6 +16,7 @@ router.post("/task", protectedRoute, async(req, res)=>{
     const folder_username = user.username;
     if (!title || !status) return res.status(400).json({error: "Missing data"});
     if (folder_name && group_id) return res.status(400).json({error: "You cannot pass folder_name and group_id"});
+    if (group_id && (!usernames || usernames.length === 0)) return res.status(400).json({error: "Select at least one user"});
 
     const connection = await db.getConnection();
     await connection.beginTransaction();
@@ -81,7 +82,7 @@ router.put("/task", protectedRoute, async(req, res)=>{
     }
 });
 
-//route not finished
+//maybe start a transaction
 router.put("/task/update", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {id, title, description, status, deadline, priority, folder_name, group_id, usernames} = req.body.data;
@@ -188,6 +189,23 @@ router.get("/group", protectedRoute, async(req, res)=>{
         console.error("Error in get groups", error);
         return res.status(500).json({ error: error.message });
     }
+});
+
+router.delete("/group/quit", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {group_id} = req.body;
+    if (!group_id) return res.status(400).json({error: "Missing data"});
+    try {
+        const [verifGroup] = await db.execute("SELECT * FROM group_user WHERE group_id = ? AND username = ?", [group_id, user.username]);
+        if (verifGroup.length === 0) return res.status(400).json({error: "Group not found"});
+
+        await db.execute("DELETE FROM group_user WHERE group_id = ? AND username = ?", [group_id, user.username]);
+        await db.execute("DELETE task_user FROM task_user JOIN task ON task.id = task_user.task_id WHERE task.group_id = ? AND task_user.username = ?", [group_id, user.username]);
+        return res.status(200).json({message: "Group left successfully"});
+    } catch (error) {
+        console.error("Error in quit group: ", error);
+        return res.status(500).json({ error: error.message });
+    }
 })
 
 router.post("/group/addUsers", protectedRoute, async(req, res)=>{
@@ -276,7 +294,7 @@ router.delete("/folder", protectedRoute, async(req, res)=>{
         console.error("Error in delete folder", error);
         return res.status(500).json({ error: error.message });
     }
-})
+});
 
 router.post("/folder/addTasks", protectedRoute, async(req, res)=>{
     const user = req.user;
@@ -306,9 +324,20 @@ router.post("/folder/addTasks", protectedRoute, async(req, res)=>{
     }
 });
 
+router.get("/user", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    try {
+        const [users] = db.execute("SELECT username FROM user");
+        return res.status(200).json(users)
+    } catch (error) {
+        console.error("Error in get user: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+})
+
 router.get("/health", protectedRoute, (req, res)=>{
     res.status(200).json({message: "health"});
-})
+});
 
 router.post("/dev/reset", async(req, res)=>{
     try {

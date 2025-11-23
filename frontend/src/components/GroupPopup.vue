@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ArrowLeftStartOnRectangleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useGlobalStore } from '@/store'
 
 const props = defineProps({
@@ -12,13 +12,18 @@ const global = useGlobalStore()
 
 const emit = defineEmits(['close']);
 
+const name = ref('');
+const description = ref('');
+
 const close = () => {
-  //resetFields();
+  resetFields();
   emit('close')
 };
 
-const name = ref('');
-const description = ref('');
+const resetFields = ()=>{
+  name.value = props.group.name;
+  description.value = props.group.description || "";
+}
 
 watch(
   () => props.group,
@@ -37,10 +42,12 @@ const handleUpdate = async() => {
 };
 
 const handleDelete = async()=>{
-    if (confirm(`Delete folder "${props.group.name}" ?`)) {
-    //await global.deleteTask(props.task.id)
-    close()
-    //await global.fetchTasks()
+  if (confirm(`Are you sure you want to left "${props.group.name}" ?`)) {
+    await global.quitGroup(props.group.id);
+    await global.fetchGroups();
+    await global.fetchTasks()
+    global.setSelectedBinder({name: "All tasks", id: 0});
+    close();
   }
 }
 
@@ -51,7 +58,7 @@ const handleDelete = async()=>{
             <header class="flex justify-between items-center mb-2">
                 <h2 class="text-lg font-semibold">Group Details</h2>
                 <button @click="handleDelete">
-                    <TrashIcon class="size-5 text-red-500 hover:text-red-600 cursor-pointer"/>
+                    <ArrowLeftStartOnRectangleIcon class="size-5 text-red-500 hover:text-red-600 cursor-pointer"/>
                 </button>
             </header>
 
@@ -68,7 +75,7 @@ const handleDelete = async()=>{
 
                 <footer class="flex justify-end gap-3 mt-4">
                     <button type="button" @click="close" class="px-4 py-2 border rounded-md hover:bg-gray-100">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Create</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
                 </footer>
             </form>
         </div>
