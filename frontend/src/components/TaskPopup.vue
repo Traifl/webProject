@@ -50,8 +50,8 @@ watch(
       status.value = task.status || '';
       deadline.value = task.deadline || '';
       priority.value = task.priority || "";
-      group_id.value = task.group_id || '';
-      folder_name.value = task.folder_name || '';
+      group_id.value = task.group_id || "";
+      folder_name.value = task.folder_name || "";
     }
   },
   { immediate: true }
@@ -59,12 +59,12 @@ watch(
 
 const resetFields = () => {
   title.value = props.task.title;
-  description.value = props.task.description;
+  description.value = props.task.description || "";
   status.value = props.task.status;
-  deadline.value = props.task.deadline;
-  priority.value = props.task.priority;
-  group_id.value = props.task.group_id;
-  folder_name.value = props.task.folder_name
+  deadline.value = props.task.deadline || "";
+  priority.value = props.task.priority || "";
+  group_id.value = props.task.group_id || "";
+  folder_name.value = props.task.folder_name || "";
 }
 
 const handleDelete = async () => {
@@ -79,10 +79,16 @@ const handleUpdate = async () => {
   const payload = {
     id: props.task.id,
     title: title.value,
+    description: description.value,
     status: status.value,
+    deadline: deadline.value,
+    priority: priority.value,
+    folder_name: folder_name.value,
+    group_id: group_id.value,
+    usernames: usernames.value
   }
 
-  //await global.editTask(payload)
+  await global.editTask(payload)
   await global.fetchTasks()
   close()
 }

@@ -1,8 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Bars3Icon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 import { UserCircleIcon } from '@heroicons/vue/24/outline'
 import ProfilePopup from './ProfilePopup.vue'
+import { useGlobalStore } from '@/store'
+
+const global = useGlobalStore();
 
 defineProps({
   toggle: {
@@ -13,6 +16,7 @@ defineProps({
 
 const search = ref('');
 const showProfilePop = ref(false);
+
 </script>
 
 <template>
@@ -24,7 +28,7 @@ const showProfilePop = ref(false);
 
     <div class="rounded-2xl px-2 py-1 border flex flex-row justify-end gap-5 items-center">
       <input v-model="search" type="text" placeholder="Search" class="w-full rounded-md focus:outline-none"/>
-      <button class="cursor-pointer">
+      <button class="cursor-pointer" @click="searchFilter">
         <MagnifyingGlassIcon class="size-5" />
       </button>
     </div>
