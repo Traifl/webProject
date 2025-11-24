@@ -1,6 +1,7 @@
 import express from "express";
 import db from "../lib/db.js";
 import { protectedRoute } from "../lib/protect.js";
+import { areArraysEqual } from "../lib/utils.js";
 
 const STATUS = {
     'to do': 'doing',
@@ -82,7 +83,7 @@ router.put("/task", protectedRoute, async(req, res)=>{
     }
 });
 
-//maybe start a transaction
+//maybe start a transaction + problem when we go from group to folder/all tasks
 router.put("/task/update", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {id, title, description, status, deadline, priority, folder_name, group_id, usernames} = req.body.data;
@@ -112,6 +113,14 @@ router.put("/task/update", protectedRoute, async(req, res)=>{
             newGroupId = group_id;
         }
         
+        const [users] = await db.execute("SELECT username FROM task_user WHERE task_id = ?", [id]);
+        const currentUsernames = users.map(user=>user.username).sort();
+        if (!areArraysEqual(usernames, currentUsernames)){
+            await db.execute("DELETE FROM task_user WHERE task_id = ?", [id]);
+            for (const username of usernames){
+                await db.execute("INSERT INTO task_user (task_id, username) VALUES (?, ?)", [id, username]);
+            }
+        }
         await db.execute("UPDATE task SET title = ?, description = ?, status = ?, deadline = ?, priority = ?, folder_name = ?, folder_username = ?, group_id = ? WHERE id = ?", [title || current.title, description || current.description, status || current.status, deadline || current.deadline, priority || current.priority, newFolderName, newFolderUsername, newGroupId, id]);
         return res.status(200).json({message: "Task updated successfully"});
     } catch (error) {
@@ -142,39 +151,44 @@ router.delete("/task", protectedRoute, async(req, res)=>{
 
 router.get("/task", protectedRoute, async(req, res)=>{
     const user = req.user;
-    const {id_group, folder_name} = req.query;
     try {
-        let result;
-        if (id_group && folder_name) return res.status(400).json({error: "Query error"});
-        else if (id_group){
-            [result] = await db.execute("SELECT * FROM task JOIN task_user ON task.id = task_user.task_id WHERE group_id = ?", [id_group]);
-        } else if (folder_name){
-            [result] = await db.execute("SELECT * FROM task WHERE folder_name = ? AND folder_username = ?", [folder_name, user.username]);
-        } else {
-            [result] = await db.execute("SELECT task.*, `group`.name AS group_name, `group`.id AS group_id FROM task JOIN task_user ON task.id = task_user.task_id LEFT JOIN `group` ON task.group_id = `group`.id WHERE task_user.username = ?", [user.username]);
+        const [tasks] = await db.execute("SELECT task.*, `group`.name AS group_name, `group`.id AS group_id FROM task JOIN task_user ON task.id = task_user.task_id LEFT JOIN `group` ON task.group_id = `group`.id WHERE task_user.username = ?", [user.username]);   
+        for (const task of tasks){
+            if (task.group_id){
+                const [users] = await db.execute("SELECT username FROM task_user WHERE task_id = ?", [task.id]);
+                task.usernames = users.map(user=>user.username);
+            } else{
+                task.usernames = [];
+            }
         }
-        return res.status(200).json(result);
+        return res.status(200).json(tasks);
     } catch (error) {
         console.error("Error in get task: ", error);
         return res.status(500).json({ error: error.message });
     }
 });
 
-// for now we seperate creating group and adding people to the group, we only add the user who created the group
 router.post("/group", protectedRoute, async(req, res)=>{
     const user = req.user;
-    const {name, description} = req.body;
-    if (!name) return res.status(400).json({error: "Group's name missing"});
+    const {name, description, usernames} = req.body;
+    if (!name || usernames?.length < 1) return res.status(400).json({error: "Missing data"});
+
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
     try {
-        const [result] = await db.execute("INSERT INTO `group` (name, description, username) VALUES (?, ?, ?)", [name, description || null, user.username]);
-        await db.execute("INSERT INTO group_user (group_id, username) VALUES (?, ?)", [result.insertId, user.username]);
-        return res.status(201).json({message: "Group created successfully", group:{id: result.insertId, name, createdBy: user.username}});
+        const [result] = await connection.execute("INSERT INTO `group` (name, description, username) VALUES (?, ?, ?)", [name, description || null, user.username]);
+        for (const username of usernames){
+            await connection.execute("INSERT INTO group_user (group_id, username) VALUES (?, ?)", [result.insertId, username]);
+        }
+        await connection.commit();
+        return res.status(201).json({message: "Group created successfully", group:{id: result.insertId, name, createdBy: user.username, usernames}});
     } catch (error) {
-        if (error.code === "ER_DUP_ENTRY") return res.status(400).json({error: "Group already exists"});
-        console.error("Error in post groups: ", error);
+        console.error("Error in post group: ", error);
         return res.status(500).json({ error: error.message });
+    } finally {
+        connection.release();
     }
-});
+})
 
 router.get("/group", protectedRoute, async(req, res)=>{
     const user = req.user;
@@ -182,7 +196,7 @@ router.get("/group", protectedRoute, async(req, res)=>{
         const [groups] = await db.execute("SELECT * FROM `group` JOIN group_user ON `group`.id = group_user.group_id WHERE group_user.username = ?", [user.username]);
         for (const group of groups){
             const [users] = await db.execute("SELECT username FROM group_user WHERE group_id = ?", [group.id]);
-            group.users = users;
+            group.usernames = users.map(user=>user.username);
         }
         return res.status(200).json(groups);
     } catch (error) {
@@ -327,13 +341,39 @@ router.post("/folder/addTasks", protectedRoute, async(req, res)=>{
 router.get("/user", protectedRoute, async(req, res)=>{
     const user = req.user;
     try {
-        const [users] = db.execute("SELECT username FROM user");
+        const [users] = await db.execute("SELECT username FROM user");
         return res.status(200).json(users)
     } catch (error) {
         console.error("Error in get user: ", error);
         return res.status(500).json({ error: error.message });
     }
-})
+});
+
+router.get("/user/group/:group_id", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const group_id = req.params.group_id;
+    if (!group_id) return res.status(400).json({error: "Missing group id"});
+    try {
+        const [group_users] = await db.execute("SELECT username FROM group_user WHERE group_id = ?", [group_id]);
+        return res.status(200).json(group_users);
+    } catch (error) {
+        console.error("Error in get user/group_id: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/user/task/:task_id", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const task_id = req.params.task_id;
+    if (!task_id) return res.status(400).json({error: "Missing task id"});
+    try {
+        const [task_users] = await db.execute("SELECT username FROM task_user WHERE task_id = ?", [task_id]);
+        return res.status(200).json(task_users);
+    } catch (error) {
+        console.error("Error in get user/task_id: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+});
 
 router.get("/health", protectedRoute, (req, res)=>{
     res.status(200).json({message: "health"});

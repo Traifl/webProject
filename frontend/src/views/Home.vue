@@ -24,7 +24,8 @@ const toggleSideBar = ()=> showSideBar.value = !showSideBar.value;
 
 onMounted(async()=>{
   await global.fetchTasks();
-})
+  await global.fetchUsers();
+});
 
 const filteredTasks = computed(() => {
   if (global.selectedBinder.name === 'All tasks') return global.tasks;

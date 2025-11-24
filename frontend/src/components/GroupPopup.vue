@@ -14,6 +14,7 @@ const emit = defineEmits(['close']);
 
 const name = ref('');
 const description = ref('');
+const usernames = ref([]);
 
 const close = () => {
   resetFields();
@@ -23,6 +24,7 @@ const close = () => {
 const resetFields = ()=>{
   name.value = props.group.name;
   description.value = props.group.description || "";
+  usernames.value = props.group.usernames || []
 }
 
 watch(
@@ -31,6 +33,7 @@ watch(
     if (group) {
       name.value = group.name;
       description.value = group.description || '';
+      usernames.value = group.usernames || [];
     }
   },
   { immediate: true }
@@ -71,6 +74,14 @@ const handleDelete = async()=>{
                 <div>
                     <label class="block text-sm font-medium">Description</label>
                     <textarea v-model="description" class="w-full border rounded-md px-3 py-1.5 focus:outline-none focus:ring" rows="1" :placeholder="group.description || 'Enter description'"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium">Usernames</label>
+                    <div v-for="user in global.users" :key="user.username" class="flex flex-row gap-1">
+                        <input type="checkbox" :value="user.username" v-model="usernames">
+                        <p>{{ user.username }}</p>
+                    </div>
                 </div>
 
                 <footer class="flex justify-end gap-3 mt-4">

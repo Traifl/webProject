@@ -102,6 +102,8 @@ export const useGlobalStore = defineStore('global', {
     folders: [],
     groups: [],
     users: [],
+    groupUsers: [],
+    taskUsers: [],
     showNewFolder: false,
     showNewGroup: false,
     selectedBinder : {name: "All tasks", id: 0}
@@ -230,8 +232,26 @@ export const useGlobalStore = defineStore('global', {
     async fetchUsers(){
       const toast = useToastStore();
       try {
-        const res = axiosInstance.get('/user');
+        const res = await axiosInstance.get('/user');
         this.users = res.data;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);      
+      }
+    },
+    async fetchUsersInGroup(group_id){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get(`/user/group/${group_id}`);
+        this.groupUsers = res.data;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);      
+      }
+    },
+    async fetchUsersInTask(task_id){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get(`/user/task/${task_id}`);
+        this.taskUsers = res.data;
       } catch (error) {
         toast.show('error', error.response?.data?.error);      
       }
