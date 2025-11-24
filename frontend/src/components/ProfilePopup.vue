@@ -39,7 +39,7 @@ const handleLogout = async()=>{
 
         <div>
           <label class="block text-sm font-medium">Username</label>
-          <input v-model="username" type="text" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" required :placeholder="auth.user.username"/>
+          <input v-model="username" type="text" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" required :placeholder="auth.user?.username"/>
         </div>
 
       <footer class="flex justify-between mt-4">
