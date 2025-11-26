@@ -106,7 +106,14 @@ export const useGlobalStore = defineStore('global', {
     taskUsers: [],
     showNewFolder: false,
     showNewGroup: false,
-    selectedBinder : {name: "All tasks", id: 0}
+    selectedBinder : {name: "All tasks", id: 0},
+    searchedTasks: [],
+    filters:{
+      status: "Select a status",
+      priority: "Select a priority",
+      search: null
+
+    }
   }),
   actions: {
     setSelectedBinder(binder){
@@ -255,6 +262,35 @@ export const useGlobalStore = defineStore('global', {
       } catch (error) {
         toast.show('error', error.response?.data?.error);      
       }
+    },
+    async searchTasks(search){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get(`/task/${search}`);
+        this.searchedTasks = res.data;
+        this.filters.search = search;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    }
+  },
+  getters: {
+    filteredTasks: (state)=>{
+      let list = state.filters.search ? state.searchedTasks : state.tasks;
+
+      if (state.selectedBinder.name !== 'All tasks'){
+        list = list.filter(task => task.folder_name === state.selectedBinder.name || task.group_id === state.selectedBinder.id);
+      }
+
+      if (state.filters.status && state.filters.status !== "Select a status"){
+        list = list.filter(task=>task.status === state.filters.status);
+      }
+
+      if (state.filters.priority && state.filters.priority !== "Select a priority"){
+        list = list.filter(task=>task.priority === state.filters.priority);
+      }
+      
+      return list;
     }
   }
 })

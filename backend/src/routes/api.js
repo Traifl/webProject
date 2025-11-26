@@ -113,14 +113,17 @@ router.put("/task/update", protectedRoute, async(req, res)=>{
             newGroupId = group_id;
         }
         
-        const [users] = await db.execute("SELECT username FROM task_user WHERE task_id = ?", [id]);
-        const currentUsernames = users.map(user=>user.username).sort();
-        if (!areArraysEqual(usernames, currentUsernames)){
-            await db.execute("DELETE FROM task_user WHERE task_id = ?", [id]);
-            for (const username of usernames){
-                await db.execute("INSERT INTO task_user (task_id, username) VALUES (?, ?)", [id, username]);
+        const [users] = await db.execute("SELECT task_user.username FROM task_user JOIN task ON task_user.task_id = task.id WHERE task_id = ?", [id]);
+        if (users.length > 1 || users[0].group_id){
+            const currentUsernames = users.map(user=>user.username).sort();
+            if (!areArraysEqual(usernames, currentUsernames)){
+                await db.execute("DELETE FROM task_user WHERE task_id = ?", [id]);
+                for (const username of usernames){
+                    await db.execute("INSERT INTO task_user (task_id, username) VALUES (?, ?)", [id, username]);
+                }
             }
         }
+        
         await db.execute("UPDATE task SET title = ?, description = ?, status = ?, deadline = ?, priority = ?, folder_name = ?, folder_username = ?, group_id = ? WHERE id = ?", [title || current.title, description || current.description, status || current.status, deadline || current.deadline, priority || current.priority, newFolderName, newFolderUsername, newGroupId, id]);
         return res.status(200).json({message: "Task updated successfully"});
     } catch (error) {
@@ -168,6 +171,19 @@ router.get("/task", protectedRoute, async(req, res)=>{
     }
 });
 
+router.get("/task/:search", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const search = req.params.search;
+    if (!search) return res.status(400).json({error: "Missing search"});
+    try {
+        const [result] = await db.execute("SELECT * FROM task WHERE title LIKE ?", [`%${search}%`]);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Error in get task search: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+})
+
 router.post("/group", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {name, description, usernames} = req.body;
@@ -176,7 +192,7 @@ router.post("/group", protectedRoute, async(req, res)=>{
     const connection = await db.getConnection();
     await connection.beginTransaction();
     try {
-        const [result] = await connection.execute("INSERT INTO `group` (name, description, username) VALUES (?, ?, ?)", [name, description || null, user.username]);
+        const [result] = await connection.execute("INSERT INTO `group` (name, description, createdBy) VALUES (?, ?, ?)", [name, description || null, user.username]);
         for (const username of usernames){
             await connection.execute("INSERT INTO group_user (group_id, username) VALUES (?, ?)", [result.insertId, username]);
         }
