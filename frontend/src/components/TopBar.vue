@@ -47,7 +47,7 @@ onMounted(()=>{
 
     <div class="rounded-2xl px-2 py-1 border flex flex-row justify-end gap-5 items-center">
       <input v-model="search" type="text" placeholder="Search" class="w-full rounded-md focus:outline-none" @input="debouncedSearch"/>
-      <button class="cursor-pointer">
+      <button class="">
         <MagnifyingGlassIcon class="size-5" />
       </button>
     </div>

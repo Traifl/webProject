@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'vue-router';
@@ -14,7 +14,10 @@ const router = useRouter();
 const auth = useAuthStore();
 
 const emit = defineEmits(['close']);
-const close = () => emit('close');
+const close = () => {
+  username.value = '';
+  emit('close');
+};
 
 const handleLogout = async()=>{
   await auth.logout();

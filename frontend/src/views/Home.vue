@@ -22,6 +22,12 @@ const global = useGlobalStore();
 
 const toggleSideBar = ()=> showSideBar.value = !showSideBar.value;
 
+const toggleFilters = ()=>{
+  global.filters.status = "Select a status";
+  global.filters.priority = "Select a priority";
+  showFilters.value = !showFilters.value;
+};
+
 
 onMounted(async()=>{
   await global.fetchTasks();
@@ -45,7 +51,7 @@ onMounted(async()=>{
             <PlusCircleIcon class="size-5" />
             <p>New Task</p>
           </div>
-          <div class="flex flex-row bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between w-20 hover:bg-zinc-500 transition" @click="showFilters = !showFilters">
+          <div class="flex flex-row bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between w-20 hover:bg-zinc-500 transition" @click="toggleFilters">
             <AdjustmentsHorizontalIcon class="size-5" />
             <p>Filters</p>
           </div>

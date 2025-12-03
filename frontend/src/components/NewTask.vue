@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useGlobalStore } from '@/store'
 
@@ -21,23 +21,39 @@ const usernames = ref([])
 const folder_name = ref('')
 const group_id = ref('')
 
+const initializeBinder = (binder) => {
+  if (!binder) return;
+
+  if (binder.id) {
+    group_id.value = binder.id;
+    folder_name.value = '';
+  } else if (binder.id === 0){
+    folder_name.value = '';
+    group_id.value = '';
+  } else{
+    folder_name.value = binder.name;
+    group_id.value = '';
+  }
+}
+
+watch(
+  () => props.show,
+  (newShow) => {
+    if (newShow) {
+      initializeBinder(props.selectedBinder);
+    } else {
+      resetFields();
+    }
+  }
+);
+
 watch(
   () => props.selectedBinder,
   (binder) => {
-    if (!binder) return;
-
-    if (binder.id) {
-      group_id.value = binder.id;
-      folder_name.value = '';
-    } else if (binder.id === 0){
-      folder_name.value = '';
-      group_id.value = '';
-    } else{
-      folder_name.value = binder.name;
-      group_id.value = '';
+    if(props.show) {
+      initializeBinder(binder);
     }
-  },
-  { immediate: true }
+  }
 )
 
 const isGroupSelected = computed(() => group_id.value !== '')
@@ -68,14 +84,13 @@ const resetFields = () => {
 }
 
 const close = () => {
-  resetFields()
   emit('close')
 }
 
 const handleSubmit = async () => {
   if (!title.value || !status.value) {
-    alert('Title and status are mandatory')
-    return
+    alert('Title and status are mandatory');
+    return;
   }
 
   const data = {
@@ -93,6 +108,7 @@ const handleSubmit = async () => {
   await global.fetchTasks()
   close()
 }
+
 </script>
 
 <template>

@@ -98,6 +98,7 @@ router.put("/task/update", protectedRoute, async(req, res)=>{
         let newGroupId = null;
         
         if (folder_name){
+            if (current.group_id) return res.status(400).json({error: "Action denied"});
             const [verifFolder] = await db.execute("SELECT * FROM folder WHERE name = ? AND username = ?", [folder_name, user.username]);
             if (verifFolder.length === 0) return res.status(400).json({error: "Folder not found"});
             newFolderName = folder_name;
@@ -145,7 +146,7 @@ router.delete("/task", protectedRoute, async(req, res)=>{
             await db.execute("DELETE FROM task_user WHERE task_id = ? AND username = ?", [id, user.username]);
         } else if(result[0].username !== user.username) return res.status(400).json({error: "Not allowed"});
         else await db.execute("DELETE FROM task WHERE id = ?", [id]);
-        return res.status(200).json({message: `Task ${id} deleted successfully`});
+        return res.status(200).json({message: `Task deleted successfully`});
     } catch (error) {
         console.error("Error in delete task: ", error);
         return res.status(500).json({ error: error.message });
@@ -236,7 +237,56 @@ router.delete("/group/quit", protectedRoute, async(req, res)=>{
         console.error("Error in quit group: ", error);
         return res.status(500).json({ error: error.message });
     }
-})
+});
+
+router.delete("/group", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {group_id} = req.body;
+    if (!group_id) return res.status(400).json({error: "Missing data"});
+    try {
+        const [verifGroup] = await db.execute("SELECT * FROM `group` JOIN group_user on `group`.id = group_user.group_id WHERE group_id = ? AND username = ?", [group_id, user.username]);
+        if (verifGroup.length === 0) return res.status(400).json({error: "Group not found"});
+        
+        const currentGroup = verifGroup[0];
+        if (currentGroup.createdBy !== user.username) return res.status(400).json({error: "Only the admin can delete the group"});
+
+        await db.execute("DELETE FROM `group` WHERE id = ?", [group_id]);
+        
+        return res.status(200).json({message: "Group deleted successfully"});
+    } catch (error) {
+        console.error("Error in delete group: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.put("/group/update", protectedRoute, async(req, res)=>{
+    const user = req.user;
+    const {group_id, name, description, usernames} = req.body;
+    if (!group_id) return res.status(400).json({error: "Missing data"});
+    try {
+        const [verifGroup] = await db.execute("SELECT * FROM group_user JOIN `group` ON group_user.group_id = `group`.id WHERE group_user.group_id = ? AND group_user.username = ?", [group_id, user.username]);
+        if (verifGroup.length === 0) return res.status(400).json({error: "Group not found"});
+        const current = verifGroup[0];
+        if (current.createdBy !== user.username) return res.status(400).json({error: "Only the admin of the group can edit it"});
+
+        const [users] = await db.execute("SELECT group_user.username FROM group_user JOIN `group` ON group_user.group_id = `group`.id WHERE group_id = ?", [group_id]);
+        if (users.length >= 1 ){
+            const currentUsernames = users.map(user=>user.username).sort();
+            if (!areArraysEqual(usernames, currentUsernames)){
+                await db.execute("DELETE FROM group_user WHERE group_id = ?", [group_id]);
+                for (const username of usernames){
+                    await db.execute("INSERT INTO group_user (group_id, username) VALUES (?, ?)", [group_id, username]);
+                }
+            }
+        }
+
+        await db.execute("UPDATE `group` SET name = ?, description = ? WHERE `group`.id = ?", [name || current.name, description || current.description, group_id]); // modify the createdBy to make it like a true admin ????
+        return res.status(200).json({message: "Group updated successfully"});
+    } catch (error) {
+        console.error("Error in group update: ", error);
+        return res.status(500).json({ error: error.message });
+    }
+});
 
 router.post("/group/addUsers", protectedRoute, async(req, res)=>{
     const user = req.user;
@@ -268,7 +318,7 @@ router.post("/group/addUsers", protectedRoute, async(req, res)=>{
     } finally {
         connection.release();
     }
-})
+});
 
 router.post("/folder", protectedRoute, async(req, res)=>{
     const user = req.user;
@@ -293,7 +343,7 @@ router.put("/folder", protectedRoute, async(req, res)=>{
         if (verifFolder.length === 0) return res.status(400).json({error: "Folder not found"});
 
         await db.execute("UPDATE folder SET name = ? WHERE name = ? AND username = ?", [newFolder_name, folder_name, user.username]);
-        return res.status(200).json({message: "Folder edited successfully"});
+        return res.status(200).json({message: "Folder updated successfully"});
     } catch (error) {
         console.error("Error in put folder", error);
         return res.status(500).json({ error: error.message });
@@ -391,7 +441,7 @@ router.get("/user/task/:task_id", protectedRoute, async(req, res)=>{
     }
 });
 
-router.get("/health", protectedRoute, (req, res)=>{
+router.get("/health", (req, res)=>{
     res.status(200).json({message: "health"});
 });
 

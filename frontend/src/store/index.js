@@ -64,13 +64,13 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = false;
       }
     },
-    async refreshUser(){
+    async refreshUser(silent = false){
       const toast = useToastStore();
       try {
         const res = await axiosInstance.get('/auth/check');
         this.user = res.data;
       } catch (error) {
-        toast.show('error', error.response?.data?.error)
+        if (!silent) toast.show('error', error.response?.data?.error);
       }
     },
     async logout(){
@@ -112,14 +112,13 @@ export const useGlobalStore = defineStore('global', {
       status: "Select a status",
       priority: "Select a priority",
       search: null
-
     }
   }),
   actions: {
     setSelectedBinder(binder){
       this.selectedBinder = binder;
     },
-    async health(){
+    async health(){ //jamais utilisé
       const toast = useToastStore();
       try {
         const res = await axiosInstance.get('/health');
@@ -171,7 +170,8 @@ export const useGlobalStore = defineStore('global', {
     async deleteTask(id){
       const toast = useToastStore();
       try {
-        await axiosInstance.delete('/task', {data: {id}}); // const res = ??? and show toast if success ?
+        const res = await axiosInstance.delete('/task', {data: {id}});
+        toast.show('success', res.data.message);
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
@@ -223,7 +223,17 @@ export const useGlobalStore = defineStore('global', {
     async editFolder(data){
       const toast = useToastStore();
       try {
-        await axiosInstance.put('/folder', {data})
+        const res = await axiosInstance.put('/folder', {data});
+        toast.show('success', res.data.message);
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async editGroup(data){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.put('/group/update', data);
+        toast.show('success', res.data.message);
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
@@ -232,6 +242,15 @@ export const useGlobalStore = defineStore('global', {
       const toast = useToastStore();
       try {
         await axiosInstance.delete('/group/quit', {data: {group_id}});
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async deleteGroup(group_id){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.delete('/group', {data: {group_id}});
+        toast.show('success', res.data.message);
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
@@ -254,7 +273,7 @@ export const useGlobalStore = defineStore('global', {
         toast.show('error', error.response?.data?.error);      
       }
     },
-    async fetchUsersInTask(task_id){
+    async fetchUsersInTask(task_id){ //jamais utilisé
       const toast = useToastStore();
       try {
         const res = await axiosInstance.get(`/user/task/${task_id}`);

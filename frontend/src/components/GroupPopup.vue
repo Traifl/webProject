@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ArrowLeftStartOnRectangleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { useGlobalStore } from '@/store'
+import { ref, watch } from 'vue'
+import { ArrowLeftStartOnRectangleIcon, XMarkIcon, HomeIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { useAuthStore, useGlobalStore } from '@/store'
 
 const props = defineProps({
   show: Boolean,
@@ -9,6 +9,7 @@ const props = defineProps({
 });
 
 const global = useGlobalStore()
+const auth = useAuthStore()
 
 const emit = defineEmits(['close']);
 
@@ -16,36 +17,41 @@ const name = ref('');
 const description = ref('');
 const usernames = ref([]);
 
+const getFreshGroup = () => {
+  return global.groups.find(g => g.id === props.group.id) || props.group;
+}
+
+const resetFields = ()=>{
+  const freshGroup = getFreshGroup(); 
+
+  name.value = freshGroup.name;
+  description.value = freshGroup.description || "";
+  usernames.value = freshGroup.usernames || [];
+}
+
 const close = () => {
-  resetFields();
   emit('close')
 };
 
-const resetFields = ()=>{
-  name.value = props.group.name;
-  description.value = props.group.description || "";
-  usernames.value = props.group.usernames || []
-}
-
 watch(
-  () => props.group,
-  (group) => {
-    if (group) {
-      name.value = group.name;
-      description.value = group.description || '';
-      usernames.value = group.usernames || [];
+  () => props.show,
+  (newShow) => {
+    if (newShow) {
+      resetFields(); 
     }
   },
-  { immediate: true }
 );
 
 const handleUpdate = async() => {
-  //update(data)
+  await global.editGroup({group_id: props.group.id, name: name.value, description: description.value, usernames: usernames.value});
+  await global.fetchGroups();
+  await global.fetchTasks();
+  global.setSelectedBinder({ name: name.value, id: props.group.id });
   close()
 };
 
-const handleDelete = async()=>{
-  if (confirm(`Are you sure you want to left "${props.group.name}" ?`)) {
+const handleLeave = async()=>{
+  if (confirm(`Are you sure you want to leave "${props.group.name}" ?`)) {
     await global.quitGroup(props.group.id);
     await global.fetchGroups();
     await global.fetchTasks()
@@ -54,15 +60,29 @@ const handleDelete = async()=>{
   }
 }
 
+const handleDelete = async()=>{
+  if (confirm(`Are you sure you want to delete "${props.group.name}" ?`)) {
+    await global.deleteGroup(props.group.id);
+    await global.fetchGroups();
+    await global.fetchTasks()
+    global.setSelectedBinder({name: "All tasks", id: 0});
+    close();
+  }
+}
 </script>
 <template>
     <div v-if="show" class="fixed inset-0 flex items-center justify-center z-50" @click.self="close">
         <div class="bg-white rounded-lg p-4 min-w-[300px] max-w-[500px] shadow-xl">
             <header class="flex justify-between items-center mb-2">
                 <h2 class="text-lg font-semibold">Group Details</h2>
-                <button @click="handleDelete">
+                <div class="flex flex-row gap-1">
+                  <button v-if="group.createdBy == auth.user.username" @click="handleDelete">
+                    <TrashIcon class="size-5 text-red-500 hover:text-red-600 cursor-pointer"/>
+                  </button>
+                  <button @click="handleLeave">
                     <ArrowLeftStartOnRectangleIcon class="size-5 text-red-500 hover:text-red-600 cursor-pointer"/>
-                </button>
+                  </button>
+                </div>
             </header>
 
             <form @submit.prevent="handleUpdate" class="flex flex-col gap-0.5 text-gray-700">
@@ -80,7 +100,10 @@ const handleDelete = async()=>{
                     <label class="block text-sm font-medium">Usernames</label>
                     <div v-for="user in global.users" :key="user.username" class="flex flex-row gap-1">
                         <input type="checkbox" :value="user.username" v-model="usernames">
-                        <p>{{ user.username }}</p>
+                        <div class="flex flex-row items-center gap-1">
+                          <p>{{ user.username }}</p>
+                          <HomeIcon  v-if="group.createdBy == user.username" class="size-4"/>
+                        </div>
                     </div>
                 </div>
 
