@@ -5,7 +5,7 @@ import TopBar from '@/components/TopBar.vue';
 import SideBar from '@/components/SideBar.vue';
 import Task from '@/components/Task.vue';
 import NewTask from '@/components/NewTask.vue';
-import { PlusCircleIcon } from '@heroicons/vue/24/solid'
+import { ArrowPathIcon, PlusCircleIcon } from '@heroicons/vue/24/solid'
 import { AdjustmentsHorizontalIcon, Cog6ToothIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import NewFolder from '@/components/NewFolder.vue';
 import NewGroup from '@/components/NewGroup.vue';
@@ -27,6 +27,11 @@ const toggleFilters = ()=>{
   global.filters.priority = "Select a priority";
   showFilters.value = !showFilters.value;
 };
+
+const resetFilters = ()=>{
+  global.filters.status = "Select a status";
+  global.filters.priority = "Select a priority";
+}
 
 
 onMounted(async()=>{
@@ -60,7 +65,7 @@ onMounted(async()=>{
             <p>{{ global.selectedBinder.name }}</p>
           </div>
         </div>
-        <div v-if="showFilters" class="flex flex-row">
+        <div v-if="showFilters" class="flex flex-row gap-1.5 mx-1">
           <select v-model="global.filters.status" class="border rounded-md px-1 py-0.5 focus:outline-none focus:ring">
             <option value="Select a status">Select a status</option>
             <option>to do</option>
@@ -74,6 +79,11 @@ onMounted(async()=>{
             <option>mid</option>
             <option>high</option>
           </select>
+
+          <button class="flex flex-row bg-zinc-400 cursor-pointer rounded p-1 items-center justify-between w-20 hover:bg-zinc-500 transition" @click="resetFilters">
+            <ArrowPathIcon class="size-5"/>
+            <p>Reset</p>
+          </button>
         </div>
 
         <Task v-for="task in global.filteredTasks" :key="task.id" :task="task"/>
