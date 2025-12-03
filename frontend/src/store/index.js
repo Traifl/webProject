@@ -339,7 +339,7 @@ export const useChatStore = defineStore('chat', {
       const auth = useAuthStore();
       if (!auth.user) return;
 
-      this.socket = io("http://localhost:5001", {auth: {username: auth.user.username}});
+      this.socket = io("http://172.20.10.2:5001", {auth: {username: auth.user.username}});
       this.socket.on("connect", ()=>{
         this.isConnected = true;
       });
