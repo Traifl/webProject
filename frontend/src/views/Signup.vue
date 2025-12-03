@@ -12,7 +12,10 @@ const auth = useAuthStore();
 
 const handleSignup = async () => {
     const {success} = await auth.signup({ username: username.value, password: password.value });
-    if (success) router.push('/home');
+    if (success) {
+        router.push('/home');
+}
+
 };
 
 const toggleShowPassword = ()=>{
