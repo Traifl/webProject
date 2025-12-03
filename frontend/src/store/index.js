@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/lib/axios";
+import { io } from "socket.io-client";
 
 const order = {'to do': 0, 'doing': 1, 'done': 2};
 const priority = {'low': 0, 'mid': 1, 'high': 2};
@@ -24,12 +25,12 @@ export const useToastStore = defineStore('toast', {
         this.isVisible = false
       },
     },
-})
+});
 
 export const useAuthStore = defineStore('auth', {
   state: ()=>({
-      user: null,
-      isLoading: false,
+    user: null,
+    isLoading: false,
   }),
   actions: {
     async login(data) {
@@ -312,4 +313,69 @@ export const useGlobalStore = defineStore('global', {
       return list;
     }
   }
-})
+});
+
+export const useChatStore = defineStore('chat', {
+  state: ()=>({
+    socket: null,
+    messages: [],
+    showChat: true,
+    isConnected: false,
+    activeGroupId: null
+  }),
+  actions: {
+    async fetchHistory(group_id){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get(`/message/${group_id}`);
+        this.messages = res.data;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+        this.messages = [];
+      }
+    },
+    connectSocket(){
+      const toast = useToastStore();
+      const auth = useAuthStore();
+      if (!auth.user) return;
+
+      this.socket = io("http://localhost:5001", {auth: {username: auth.user.username}});
+      this.socket.on("connect", ()=>{
+        this.isConnected = true;
+      });
+      this.socket.on("disconnect", ()=>{
+        this.isConnected = false;
+      });
+      this.socket.on("receive_message", (message)=>{
+        if (message.group_id === this.activeGroupId){
+          this.messages.push(message);
+        }
+      });
+      this.socket.on("error", (error)=>{
+        toast.show('error', error);
+      });
+    },
+    async joinGroup(group_id){
+      if (!this.socket) this.connectSocket();
+
+      if (this.activeGroupId) this.socket.emit("leave_group", this.activeGroupId);
+      
+      this.messages = [];
+      this.activeGroupId = group_id;
+
+      this.socket.emit("join_group", group_id);
+      await this.fetchHistory(group_id);
+    },
+    sendMessage(content){
+      if (!this.socket || !this.activeGroupId) return;
+      this.socket.emit("send_message", {content, groupId: this.activeGroupId});
+    },
+    disconnectSocket(){
+      if (this.socket){
+        this.socket.disconnect();
+        this.socket = null;
+        this.isConnected = false;
+      }
+    }
+  }
+});

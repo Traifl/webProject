@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
+import {createServer} from 'node:http';
 import db from "./lib/db.js";
 
+import initializeSocket from "./lib/socket.js";
 import authRoutes from "./routes/auth.js";
 import apiRoutes from "./routes/api.js";
 
@@ -17,7 +19,11 @@ const PORT = process.env.PORT;
 app.use("/api/auth", authRoutes);
 app.use("/api", apiRoutes);
 
-app.listen(PORT, "0.0.0.0", async()=>{
+const httpServer = createServer(app);
+
+initializeSocket(httpServer);
+
+httpServer.listen(PORT, "0.0.0.0", async()=>{
     console.log(`server running on port ${PORT}`);
     try {
         await db.query("SELECT 1");
