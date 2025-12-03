@@ -130,7 +130,7 @@ const handleUpdate = async () => {
 
         <div>
           <label class="block text-sm font-medium">Deadline</label>
-          <input v-model="deadline" type="date" class="w-full border rounded-md px-3 py-1.5 focus:outline-none focus:ring" :placeholder="task.deadline || 'caca'"/>
+          <input v-model="deadline" type="date" class="w-full border rounded-md px-3 py-1.5 focus:outline-none focus:ring" :placeholder="task.deadline"/>
         </div>
 
         <div>

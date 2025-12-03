@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { Bars3Icon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { UserCircleIcon } from '@heroicons/vue/24/outline'
 import ProfilePopup from './ProfilePopup.vue'
 import { useGlobalStore } from '@/store'
@@ -27,13 +27,17 @@ defineProps({
 const search = ref('');
 const showProfilePop = ref(false);
 
+const resetSearch = ()=>{
+  global.filters.search = null;
+  search.value = '';
+}
+
 let debouncedSearch;
 
 onMounted(()=>{
   debouncedSearch = debounce(()=>{
-    if (!search.value) return;
     global.searchTasks(search.value)
-  }, 400);
+  }, 300);
 });
 
 </script>
@@ -47,7 +51,10 @@ onMounted(()=>{
 
     <div class="rounded-2xl px-2 py-1 border flex flex-row justify-end gap-5 items-center">
       <input v-model="search" type="text" placeholder="Search" class="w-full rounded-md focus:outline-none" @input="debouncedSearch"/>
-      <button class="">
+      <button v-if="search" @click="resetSearch" class="cursor-pointer">
+        <XMarkIcon class="size-5"/>
+      </button>
+      <button v-else>
         <MagnifyingGlassIcon class="size-5" />
       </button>
     </div>
