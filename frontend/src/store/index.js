@@ -85,14 +85,14 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = false;
       }
     },
-    async refreshUser(){
+    async refreshUser(silent = false){
       const toast = useToastStore();
       try {
         const res = await axiosInstance.get('/auth/check');
         this.user = res.data; 
         this.connectSocket();
       } catch (error) {
-        toast.show('error', error.response?.data?.error)
+        if (!silent) toast.show('error', error.response?.data?.error);
       }
     },
     async logout(){
@@ -124,11 +124,24 @@ export const useGlobalStore = defineStore('global', {
     tasks: [],
     folders: [],
     groups: [],
+    users: [],
+    groupUsers: [],
+    taskUsers: [],
     showNewFolder: false,
     showNewGroup: false,
+    selectedBinder : {name: "All tasks", id: 0},
+    searchedTasks: [],
+    filters:{
+      status: "Select a status",
+      priority: "Select a priority",
+      search: null
+    }
   }),
   actions: {
-    async health(){
+    setSelectedBinder(binder){
+      this.selectedBinder = binder;
+    },
+    async health(){ //jamais utilisé
       const toast = useToastStore();
       try {
         const res = await axiosInstance.get('/health');
@@ -189,7 +202,8 @@ export const useGlobalStore = defineStore('global', {
     async editTask(data){
       const toast = useToastStore();
       try {
-        await axiosInstance.put('/task/update', {data});
+        const res = await axiosInstance.put('/task/update', {data});
+        toast.show('success', res.data.message);
       } catch (error) {
         toast.show('error', error.response?.data?.error); 
       }
@@ -197,7 +211,8 @@ export const useGlobalStore = defineStore('global', {
     async deleteTask(id){
       const toast = useToastStore();
       try {
-        await axiosInstance.delete('/task', {data: {id}});
+        const res = await axiosInstance.delete('/task', {data: {id}});
+        toast.show('success', res.data.message);
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
@@ -226,8 +241,7 @@ export const useGlobalStore = defineStore('global', {
         const res = await axiosInstance.post('/folder', data);
         toast.show('success', res.data.message);
       } catch (error) {
-        toast.show('error', error.response?.data?.error || 'caca');
-        console.log(error);
+        toast.show('error', error.response?.data?.error);
       }
     },
     async createGroup(data){
@@ -236,9 +250,107 @@ export const useGlobalStore = defineStore('global', {
         const res = await axiosInstance.post('/group', data);
         toast.show('success', res.data.message);
       } catch (error) {
-        toast.show('error', error.response?.data?.error || 'caca');
-        console.log(error);
+        toast.show('error', error.response?.data?.error);
       }
+    },
+    async deleteFolder(folder_name){
+      const toast = useToastStore();
+      try {
+        await axiosInstance.delete('/folder', {data: {folder_name}});
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async editFolder(data){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.put('/folder', {data});
+        toast.show('success', res.data.message);
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async editGroup(data){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.put('/group/update', data);
+        toast.show('success', res.data.message);
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async quitGroup(group_id){
+      const toast = useToastStore();
+      try {
+        await axiosInstance.delete('/group/quit', {data: {group_id}});
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async deleteGroup(group_id){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.delete('/group', {data: {group_id}});
+        toast.show('success', res.data.message);
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    },
+    async fetchUsers(){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get('/user');
+        this.users = res.data;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);      
+      }
+    },
+    async fetchUsersInGroup(group_id){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get(`/user/group/${group_id}`);
+        this.groupUsers = res.data;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);      
+      }
+    },
+    async fetchUsersInTask(task_id){ //jamais utilisé
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get(`/user/task/${task_id}`);
+        this.taskUsers = res.data;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);      
+      }
+    },
+    async searchTasks(search){
+      const toast = useToastStore();
+      try {
+        const res = await axiosInstance.get(`/task/${search}`);
+        this.searchedTasks = res.data;
+        this.filters.search = search;
+      } catch (error) {
+        toast.show('error', error.response?.data?.error);
+      }
+    }
+  },
+  getters: {
+    filteredTasks: (state)=>{
+      let list = state.filters.search ? state.searchedTasks : state.tasks;
+
+      if (state.selectedBinder.name !== 'All tasks'){
+        list = list.filter(task => task.folder_name === state.selectedBinder.name || task.group_id === state.selectedBinder.id);
+      }
+
+      if (state.filters.status && state.filters.status !== "Select a status"){
+        list = list.filter(task=>task.status === state.filters.status);
+      }
+
+      if (state.filters.priority && state.filters.priority !== "Select a priority"){
+        list = list.filter(task=>task.priority === state.filters.priority);
+      }
+      
+      return list;
     }
   }
 })

@@ -19,8 +19,8 @@ CREATE TABLE `group` (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    username VARCHAR(50) NOT NULL,
-    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
+    createdBy VARCHAR(50) NOT NULL,
+    FOREIGN KEY (createdBy) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE group_user (
@@ -39,12 +39,14 @@ CREATE TABLE task (
     deadline DATE,
     priority VARCHAR(20),
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    folder_name VARCHAR(100),
-    folder_username VARCHAR(50),
+    folder_name VARCHAR(100) NULL,
+    folder_username VARCHAR(50) NULL,
     group_id INT,
-    FOREIGN KEY (folder_name, folder_username) REFERENCES folder(name, username) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES `group`(id) ON DELETE SET NULL ON UPDATE CASCADE
+
+    FOREIGN KEY (folder_name, folder_username) REFERENCES folder(name, username) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (group_id )REFERENCES `group`(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
+
 
 CREATE TABLE task_user (
     username VARCHAR(50),

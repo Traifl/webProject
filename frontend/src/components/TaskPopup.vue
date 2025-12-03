@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useGlobalStore } from '@/store'
 
@@ -23,7 +23,7 @@ const deadline = ref('');
 const priority = ref('');
 const folder_name = ref('');
 const group_id = ref('');
-const usernames = ref('');
+const usernames = ref([]);
 
 
 const isGroupSelected = computed(() => group_id.value !== '');
@@ -31,13 +31,14 @@ const isGroupSelected = computed(() => group_id.value !== '');
 watch(folder_name, (newVal) => {
   if (newVal) {
     group_id.value = ''
-    usernames.value = ''
+    usernames.value = []
   }
 })
 
-watch(group_id, (newVal) => {
+watch(group_id, async(newVal) => {
   if (newVal) {
     folder_name.value = ''
+    await global.fetchUsersInGroup(group_id.value);
   }
 });
 
@@ -50,8 +51,9 @@ watch(
       status.value = task.status || '';
       deadline.value = task.deadline || '';
       priority.value = task.priority || "";
-      group_id.value = task.group_id || '';
-      folder_name.value = task.folder_name || '';
+      group_id.value = task.group_id || "";
+      folder_name.value = task.folder_name || "";
+      usernames.value = task.usernames || [];
     }
   },
   { immediate: true }
@@ -59,12 +61,13 @@ watch(
 
 const resetFields = () => {
   title.value = props.task.title;
-  description.value = props.task.description;
+  description.value = props.task.description || "";
   status.value = props.task.status;
-  deadline.value = props.task.deadline;
-  priority.value = props.task.priority;
-  group_id.value = props.task.group_id;
-  folder_name.value = props.task.folder_name
+  deadline.value = props.task.deadline || "";
+  priority.value = props.task.priority || "";
+  group_id.value = props.task.group_id || "";
+  folder_name.value = props.task.folder_name || "";
+  usernames.value = props.task.usernames || [];
 }
 
 const handleDelete = async () => {
@@ -79,10 +82,16 @@ const handleUpdate = async () => {
   const payload = {
     id: props.task.id,
     title: title.value,
+    description: description.value,
     status: status.value,
+    deadline: deadline.value,
+    priority: priority.value,
+    folder_name: folder_name.value,
+    group_id: group_id.value,
+    usernames: usernames.value.sort()
   }
 
-  //await global.editTask(payload)
+  await global.editTask(payload)
   await global.fetchTasks()
   close()
 }
@@ -121,7 +130,7 @@ const handleUpdate = async () => {
 
         <div>
           <label class="block text-sm font-medium">Deadline</label>
-          <input v-model="deadline" type="date" class="w-full border rounded-md px-3 py-1.5 focus:outline-none focus:ring" :placeholder="task.deadline || 'caca'"/>
+          <input v-model="deadline" type="date" class="w-full border rounded-md px-3 py-1.5 focus:outline-none focus:ring" :placeholder="task.deadline"/>
         </div>
 
         <div>
@@ -156,7 +165,10 @@ const handleUpdate = async () => {
 
         <div v-if="isGroupSelected">
           <label class="block text-sm font-medium">Usernames</label>
-          <input v-model="usernames" type="text" class="w-full border rounded-md px-3 py-1.5 focus:outline-none focus:ring" placeholder="ex: alice,bob,charlie" />
+          <div v-for="user in global.groupUsers" :key="user.username" class="flex flex-row gap-1">
+            <input type="checkbox" :value="user.username" v-model="usernames">
+            <p>{{ user.username }}</p>
+          </div>
         </div>
 
         <div>

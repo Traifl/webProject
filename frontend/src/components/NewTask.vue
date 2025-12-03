@@ -5,56 +5,92 @@ import { useGlobalStore } from '@/store'
 
 const props = defineProps({
   show: Boolean,
+  selectedBinder: Object
 })
 
+const emit = defineEmits(['close'])
 const global = useGlobalStore()
-
-const emit = defineEmits(['close']);
-
-const close = () => {
-  resetFields();
-  emit('close')
-}
 
 const title = ref('')
 const description = ref('')
 const status = ref('')
 const deadline = ref('')
 const priority = ref('')
+const usernames = ref([])
+
 const folder_name = ref('')
 const group_id = ref('')
-const usernames = ref('')
+
+const initializeBinder = (binder) => {
+  if (!binder) return;
+
+  if (binder.id) {
+    group_id.value = binder.id;
+    folder_name.value = '';
+  } else if (binder.id === 0){
+    folder_name.value = '';
+    group_id.value = '';
+  } else{
+    folder_name.value = binder.name;
+    group_id.value = '';
+  }
+}
+
+watch(
+  () => props.show,
+  (newShow) => {
+    if (newShow) {
+      initializeBinder(props.selectedBinder);
+    } else {
+      resetFields();
+    }
+  }
+);
+
+watch(
+  () => props.selectedBinder,
+  (binder) => {
+    if(props.show) {
+      initializeBinder(binder);
+    }
+  }
+)
 
 const isGroupSelected = computed(() => group_id.value !== '')
 
 watch(folder_name, (newVal) => {
-  if (newVal) {
+  if (newVal !== '') {
     group_id.value = ''
-    usernames.value = ''
+    usernames.value = []
   }
 })
 
-watch(group_id, (newVal) => {
-  if (newVal) {
+watch(group_id, async(newVal) => {
+  if (newVal !== '') {
     folder_name.value = ''
+    await global.fetchUsersInGroup(group_id.value);
   }
-});
+})
 
-const resetFields = ()=>{
-  title.value = '';
-  description.value = '';
-  status.value = '';
-  deadline.value = '';
-  priority.value = '';
-  folder_name.value = '';
-  group_id.value = '';
-  usernames.value = '';
-};
+const resetFields = () => {
+  title.value = ''
+  description.value = ''
+  status.value = ''
+  deadline.value = ''
+  priority.value = ''
+  usernames.value = []
+  folder_name.value = ''
+  group_id.value = ''
+}
 
-const handleSubmit = async() => {
+const close = () => {
+  emit('close')
+}
+
+const handleSubmit = async () => {
   if (!title.value || !status.value) {
     alert('Title and status are mandatory');
-    return
+    return;
   }
 
   const data = {
@@ -64,17 +100,16 @@ const handleSubmit = async() => {
     deadline: deadline.value || null,
     priority: priority.value || null,
     folder_name: folder_name.value || null,
-    group_id: group_id.value || null,
-    usernames: isGroupSelected.value && usernames.value
-      ? usernames.value.split(',').map(u => u.trim())
-      : null,
-  }  
-  await global.createTask(data);
-  await global.fetchTasks();
+    group_id: group_id.value !== '' ? group_id.value : null,
+    usernames: isGroupSelected.value && usernames.value.length ? usernames.value : null
+  }
+
+  await global.createTask(data)
+  await global.fetchTasks()
   close()
 }
-</script>
 
+</script>
 
 <template>
   <div 
@@ -127,28 +162,31 @@ const handleSubmit = async() => {
         </div>
 
         <div>
-            <label class="block text-sm font-medium">Folder</label>
-            <select v-model="folder_name" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" :class="group_id !== '' ? 'bg-gray-100 text-gray-400' : ''">
-                <option value="">Select a folder</option>
-                <option v-for="folder in global.folders" :key="folder.name" :value="folder.name">
-                {{ folder.name }}
-                </option>
-            </select>
+          <label class="block text-sm font-medium">Folder</label>
+          <select v-model="folder_name" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" :class="group_id !== '' ? 'bg-gray-100 text-gray-400' : ''">
+              <option value="">Select a folder</option>
+              <option v-for="folder in global.folders" :key="folder.name" :value="folder.name">
+              {{ folder.name }}
+              </option>
+          </select>
         </div>
 
         <div>       
-            <label class="block text-sm font-medium">Group</label>
-            <select v-model="group_id" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" :class="folder_name !== '' ? 'bg-gray-100 text-gray-400' : ''">
-                <option value="">Select a group</option>
-                <option v-for="group in global.groups" :key="group.id" :value="group.id">
-                {{ group.name }}
-                </option>
-            </select>
+          <label class="block text-sm font-medium">Group</label>
+          <select v-model="group_id" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" :class="folder_name !== '' ? 'bg-gray-100 text-gray-400' : ''">
+              <option value="">Select a group</option>
+              <option v-for="group in global.groups" :key="group.id" :value="group.id">
+              {{ group.name }}
+              </option>
+          </select>
         </div>
 
         <div v-if="isGroupSelected">
           <label class="block text-sm font-medium">Usernames</label>
-          <input v-model="usernames" type="text" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" placeholder="ex: alice,bob,charlie" />
+          <div v-for="user in global.groupUsers" :key="user.username" class="flex flex-row gap-1">
+            <input type="checkbox" :value="user.username" v-model="usernames">
+            <p>{{ user.username }}</p>
+          </div>
         </div>
 
         <footer class="flex justify-end gap-3 mt-4">
