@@ -19,12 +19,15 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore()
+  const isPublicRoute = ['Login', 'Welcome', 'Signup'].includes(to.name);
 
-  if (!auth.user) await auth.refreshUser()
+  if (!auth.user) {
+    await auth.refreshUser(isPublicRoute);
+  }
 
   if (to.meta.auth && !auth.user) {
     next('/')
-  } else if ((['Login', 'Welcome', 'Signup'].includes(to.name)) && auth.user) {
+  } else if (isPublicRoute && auth.user) {
     next('/home')
   } else {
     next()

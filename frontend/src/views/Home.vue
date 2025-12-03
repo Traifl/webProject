@@ -16,19 +16,22 @@ const showSideBar = ref(true);
 const showNewTask = ref(false);
 const showFolderDetails = ref(false);
 const showGroupDetails = ref(false);
+const showFilters = ref(false);
 
 const global = useGlobalStore();
 
 const toggleSideBar = ()=> showSideBar.value = !showSideBar.value;
 
+const toggleFilters = ()=>{
+  global.filters.status = "Select a status";
+  global.filters.priority = "Select a priority";
+  showFilters.value = !showFilters.value;
+};
+
 
 onMounted(async()=>{
   await global.fetchTasks();
-})
-
-const filteredTasks = computed(() => {
-  if (global.selectedBinder.name === 'All tasks') return global.tasks;
-  return global.tasks.filter(task => task.folder_name === global.selectedBinder.name || task.group_id === global.selectedBinder.id);
+  await global.fetchUsers();
 });
 
 </script>
@@ -48,17 +51,32 @@ const filteredTasks = computed(() => {
             <PlusCircleIcon class="size-5" />
             <p>New Task</p>
           </div>
-          <div class="flex flex-row bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between w-20 hover:bg-zinc-500 transition" @click="">
+          <div class="flex flex-row bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between w-20 hover:bg-zinc-500 transition" @click="toggleFilters">
             <AdjustmentsHorizontalIcon class="size-5" />
-            <p>Filter</p>
+            <p>Filters</p>
           </div>
           <div v-if="global.selectedBinder.name !== 'All tasks'" class="flex flex-row gap-2 bg-zinc-400 cursor-pointer rounded m-1 p-1 items-center justify-between hover:bg-zinc-500 transition" @click="global.selectedBinder.id ? showGroupDetails = true : showFolderDetails = true">
             <Cog6ToothIcon class="size-5"/>
             <p>{{ global.selectedBinder.name }}</p>
           </div>
         </div>
+        <div v-if="showFilters" class="flex flex-row">
+          <select v-model="global.filters.status" class="border rounded-md px-1 py-0.5 focus:outline-none focus:ring">
+            <option value="Select a status">Select a status</option>
+            <option>to do</option>
+            <option>doing</option>
+            <option>done</option>
+          </select>
 
-        <Task v-for="task in filteredTasks" :key="task.id" :task="task"/>
+          <select v-model="global.filters.priority" class="border rounded-md px-1 py-0.5 focus:outline-none focus:ring">
+            <option value="Select a priority">Select a priority</option>
+            <option>low</option>
+            <option>mid</option>
+            <option>high</option>
+          </select>
+        </div>
+
+        <Task v-for="task in global.filteredTasks" :key="task.id" :task="task"/>
       </div>
     </div>
     <NewTask :show="showNewTask" @close="showNewTask = false" :selectedBinder="global.selectedBinder"/>

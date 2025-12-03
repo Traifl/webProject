@@ -13,7 +13,7 @@ const close = () => {
 };
 
 const handleSubmit = async()=>{
-    await global.createGroup({name: name.value, description: description.value});
+    await global.createGroup({name: name.value, description: description.value, usernames: usernames.value});
     await global.fetchGroups();
     close();
 };
@@ -21,10 +21,12 @@ const handleSubmit = async()=>{
 const resetFields = ()=>{
     name.value = '';
     description.value = '';
+    usernames.value = [];
 }
 
 const name = ref('');
 const description = ref('');
+const usernames = ref([]);
 
 </script>
 
@@ -47,6 +49,14 @@ const description = ref('');
                 <div>
                     <label class="block text-sm font-medium">Description</label>
                     <textarea v-model="description" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring" rows="1" placeholder="Enter description"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium">Usernames</label>
+                    <div v-for="user in global.users" :key="user.username" class="flex flex-row gap-1">
+                        <input type="checkbox" :value="user.username" v-model="usernames">
+                        <p>{{ user.username }}</p>
+                    </div>
                 </div>
 
                 <footer class="flex justify-end gap-3 mt-4">

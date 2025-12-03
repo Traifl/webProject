@@ -1,7 +1,17 @@
 import jwt from "jsonwebtoken"
 
 export function generateToken(username) {
-    return jwt.sign({username}, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+  return jwt.sign({username}, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
+};
+
+export function areArraysEqual(arr1, arr2){
+  if (arr1.length !== arr2.length) return false;
+  
+  for (let i = 0; i < arr1.length; i++){
+    if (arr1[i] !== arr2[i]) return false;
   }
+  
+  return true;
+};

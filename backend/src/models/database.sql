@@ -16,8 +16,8 @@ CREATE TABLE `group` (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    username VARCHAR(50) NOT NULL,
-    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
+    createdBy VARCHAR(50) NOT NULL,
+    FOREIGN KEY (createdBy) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE group_user (
