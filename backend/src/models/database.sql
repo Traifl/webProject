@@ -1,3 +1,6 @@
+CREATE DATABASE projet_web;
+USE projet_web;
+
 CREATE TABLE user (
     username VARCHAR(50) PRIMARY KEY,
     password VARCHAR(255) NOT NULL
@@ -39,6 +42,7 @@ CREATE TABLE task (
     folder_name VARCHAR(100) NULL,
     folder_username VARCHAR(50) NULL,
     group_id INT,
+
     FOREIGN KEY (folder_name, folder_username) REFERENCES folder(name, username) ON DELETE SET NULL ON UPDATE CASCADE,
     FOREIGN KEY (group_id )REFERENCES `group`(id) ON DELETE SET NULL ON UPDATE CASCADE
 );

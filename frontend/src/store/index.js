@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
 import { axiosInstance } from "@/lib/axios";
+import {io} from "socket.io-client";
+
+const BASE_URL = "http://localhost:5001";
 
 const order = {'to do': 0, 'doing': 1, 'done': 2};
 const priority = {'low': 0, 'mid': 1, 'high': 2};
@@ -30,6 +33,7 @@ export const useAuthStore = defineStore('auth', {
   state: ()=>({
       user: null,
       isLoading: false,
+      socket : null,
   }),
   actions: {
     async login(data) {
@@ -37,8 +41,10 @@ export const useAuthStore = defineStore('auth', {
       this.isLoading = true
       try {
         const res = await axiosInstance.post('/auth/login', data)
-        this.user = res.data.user
-        toast.show('success', res.data.message)
+        this.user = res.data.user;
+        if(!this.socket)
+          this.connectSocket();
+        toast.show('success', res.data.message);
         return { success: true }
       } catch (error) {
         const msg = error.response?.data?.error || 'Server error'
@@ -48,6 +54,19 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = false
       }
     },
+    connectSocket(){
+      const global = useGlobalStore();
+      this.socket = io(BASE_URL);
+      this.socket.emit("link", this.user);
+      global.initReceiveMessage();
+    },
+
+    disconnectSocket(){
+      this.socket.disconnect();
+      this.socket = null;
+    },
+
+
     async signup(data) {
       const toast = useToastStore();
       this.isLoading = true;
@@ -55,6 +74,8 @@ export const useAuthStore = defineStore('auth', {
         const res = await axiosInstance.post('/auth/signup', data);
         this.user = res.data.user;
         toast.show('success', res.data.message);
+        if(!this.socket)
+          this.connectSocket();
         return { success: true }
       } catch (error) {
         const msg = error.response?.data?.error || 'Server error';
@@ -68,7 +89,8 @@ export const useAuthStore = defineStore('auth', {
       const toast = useToastStore();
       try {
         const res = await axiosInstance.get('/auth/check');
-        this.user = res.data;
+        this.user = res.data; 
+        this.connectSocket();
       } catch (error) {
         if (!silent) toast.show('error', error.response?.data?.error);
       }
@@ -79,6 +101,7 @@ export const useAuthStore = defineStore('auth', {
         const res = await axiosInstance.post("/auth/logout");
         this.user = null;
         toast.show('success', res.data.message);
+        this.disconnectSocket();
       } catch (error) {
         toast.show('error', error.response?.data?.error);
       }
@@ -136,6 +159,24 @@ export const useGlobalStore = defineStore('global', {
         toast.show('error', error.response?.data?.error);
       }
     },
+
+    async sendMessage(message, group){
+      const auth = useAuthStore();
+      if (message != "") {
+        console.log("passage");
+        auth.socket.emit("user_message", {"message" : message, "group" : group, "user" : auth.user.username});
+      }
+      // route pour envoyer le message dans la database
+    },
+
+    initReceiveMessage(){
+      const auth = useAuthStore();
+      auth.socket.on("serveur_message", data => {
+        console.log(data.message);
+        // faire ce qui faut pour gérer le message
+      })
+    },
+
     async fetchTasks(){
       const toast = useToastStore();
       try {
