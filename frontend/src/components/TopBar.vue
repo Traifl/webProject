@@ -37,7 +37,7 @@ let debouncedSearch;
 onMounted(()=>{
   debouncedSearch = debounce(()=>{
     global.searchTasks(search.value)
-  }, 300);
+  }, 200);
 });
 
 </script>

@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref} from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
-import { useGlobalStore } from '@/store'
+import { useAuthStore, useGlobalStore } from '@/store'
 
 const global = useGlobalStore();
+const auth = useAuthStore();
 
 const emit = defineEmits(['close']);
 
@@ -21,12 +22,12 @@ const handleSubmit = async()=>{
 const resetFields = ()=>{
     name.value = '';
     description.value = '';
-    usernames.value = [];
+    usernames.value = [auth.user.username];
 }
 
 const name = ref('');
 const description = ref('');
-const usernames = ref([]);
+const usernames = ref([auth.user.username]);
 
 </script>
 
