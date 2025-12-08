@@ -119,7 +119,7 @@ export const useGlobalStore = defineStore('global', {
     setSelectedBinder(binder){
       this.selectedBinder = binder;
     },
-    async health(){ //jamais utilisé
+    async health(){
       const toast = useToastStore();
       try {
         const res = await axiosInstance.get('/health');
@@ -270,15 +270,6 @@ export const useGlobalStore = defineStore('global', {
       try {
         const res = await axiosInstance.get(`/user/group/${group_id}`);
         this.groupUsers = res.data;
-      } catch (error) {
-        toast.show('error', error.response?.data?.error);      
-      }
-    },
-    async fetchUsersInTask(task_id){ //jamais utilisé
-      const toast = useToastStore();
-      try {
-        const res = await axiosInstance.get(`/user/task/${task_id}`);
-        this.taskUsers = res.data;
       } catch (error) {
         toast.show('error', error.response?.data?.error);      
       }

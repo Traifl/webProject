@@ -1,12 +1,12 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue';
-import { useGlobalStore, useAuthStore, useChatStore } from '../store';
+import { onMounted, ref } from 'vue';
+import { useGlobalStore, useChatStore } from '../store';
 import TopBar from '@/components/TopBar.vue';
 import SideBar from '@/components/SideBar.vue';
 import Task from '@/components/Task.vue';
 import NewTask from '@/components/NewTask.vue';
 import { ArrowPathIcon, PlusCircleIcon } from '@heroicons/vue/24/solid'
-import { AdjustmentsHorizontalIcon, ChatBubbleBottomCenterIcon, Cog6ToothIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { AdjustmentsHorizontalIcon, ChatBubbleBottomCenterIcon, Cog6ToothIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import NewFolder from '@/components/NewFolder.vue';
 import NewGroup from '@/components/NewGroup.vue';
 import FolderPopup from '@/components/FolderPopup.vue';

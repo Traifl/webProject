@@ -98,9 +98,9 @@ const handleDelete = async()=>{
 
                 <div>
                     <label class="block text-sm font-medium">Usernames</label>
-                    <div v-for="user in global.users" :key="user.username" class="flex flex-row gap-1">
+                    <div v-for="user in global.users" :key="user.username" class="flex flex-row gap-1 items-center">
                         <input type="checkbox" :value="user.username" v-model="usernames">
-                        <div class="flex flex-row items-center gap-1">
+                        <div class="flex flex-row items-center gap-1 items-center">
                           <p>{{ user.username }}</p>
                           <HomeIcon  v-if="group.createdBy == user.username" class="size-4"/>
                         </div>

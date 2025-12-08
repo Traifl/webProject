@@ -14,10 +14,7 @@ const showTaskPopup = ref(false)
   <div class="py-1.5 px-2 bg-zinc-400 m-1 max-w-64 rounded flex flex-col" :key="task.id">
     <div class="flex flex-row items-center justify-between">
       <div class="flex flex-row items-center gap-1">
-        <button
-          class="size-5 rounded-full cursor-pointer"
-          :class="task.status === 'done' ? 'bg-lime-300' : task.status === 'doing' ? 'bg-amber-300' : 'bg-red-400'"
-          @click="global.editStatus(task.id)"
+        <button class="size-5 rounded-full cursor-pointer" :class="task.status === 'done' ? 'bg-lime-300' : task.status === 'doing' ? 'bg-amber-300' : 'bg-red-400'" @click="global.editStatus(task.id)"
         ></button>
         <p class="font-bold">{{ task.title }}</p>
       </div>

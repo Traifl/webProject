@@ -53,7 +53,7 @@ const usernames = ref([]);
 
                 <div>
                     <label class="block text-sm font-medium">Usernames</label>
-                    <div v-for="user in global.users" :key="user.username" class="flex flex-row gap-1">
+                    <div v-for="user in global.users" :key="user.username" class="flex flex-row gap-1 items-center">
                         <input type="checkbox" :value="user.username" v-model="usernames">
                         <p>{{ user.username }}</p>
                     </div>

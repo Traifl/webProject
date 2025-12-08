@@ -1,7 +1,7 @@
 <script setup>
 import { useAuthStore, useChatStore, useGlobalStore } from '@/store';
 import { onMounted, onUnmounted, ref, nextTick, watch } from 'vue';
-import { PaperAirplaneIcon } from '@heroicons/vue/24/solid';
+import { PaperAirplaneIcon } from '@heroicons/vue/24/outline';
 
 const global = useGlobalStore();
 const chat = useChatStore();
@@ -65,22 +65,36 @@ const currentUser = auth.user?.username;
 
 <template>
     <div class="flex flex-col h-full border-l shadow-md bg-white">
-        <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+        <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
             <div v-for="(message, index) in chat.messages" :key="index" :class="['flex', message.username === currentUser ? 'justify-end' : 'justify-start']">
-                <div :class="['max-w-xs lg:max-w-md p-3 rounded-xl shadow-sm', message.username === currentUser ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-tl-none']">
+                <div :class="['max-w-xs lg:max-w-md p-3 rounded-xl shadow-sm', message.username === currentUser ? 'bg-zinc-400 rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-tl-none']">
                     <p v-if="message.username !== currentUser" class="font-bold text-sm mb-1">{{ message.username }}</p>
                     <p class="text-sm break-words">{{ message.content }}</p>
                 </div>
             </div>
         </div>
 
-        <footer class="border-t p-3 pb-10">
+        <footer class="border-t p-3">
             <form @submit.prevent="sendMessage" class="flex gap-2">
-                <input v-model="newMessage" type="text" placeholder="Write a message" class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"/>
-                <button type="submit" :disabled="!newMessage.trim()" class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 disabled:bg-blue-300 transition">
+                <input v-model="newMessage" type="text" placeholder="Write a message" class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring disabled:bg-gray-100"/>
+                <button type="submit" :disabled="!newMessage.trim()" class="bg-zinc-400 p-2 rounded-full hover:bg-zinc-500 disabled:bg-zinc-300 transition">
                     <PaperAirplaneIcon class="size-5"/>
                 </button>
             </form>
+            <p class="pt-3 text-xs text-gray-500">You can send a message to everybody in this group</p>
         </footer>
     </div>
 </template>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f3f4f6;
+}
+</style>

@@ -428,19 +428,6 @@ router.get("/user/group/:group_id", protectedRoute, async(req, res)=>{
     }
 });
 
-router.get("/user/task/:task_id", protectedRoute, async(req, res)=>{
-    const user = req.user;
-    const task_id = req.params.task_id;
-    if (!task_id) return res.status(400).json({error: "Missing task id"});
-    try {
-        const [task_users] = await db.execute("SELECT username FROM task_user WHERE task_id = ?", [task_id]);
-        return res.status(200).json(task_users);
-    } catch (error) {
-        console.error("Error in get user/task_id: ", error);
-        return res.status(500).json({ error: error.message });
-    }
-});
-
 router.get("/message/:group_id", protectedRoute, async(req, res)=>{
     const user = req.user;
     const group_id = req.params.group_id;
