@@ -83,7 +83,6 @@ router.put("/task", protectedRoute, async(req, res)=>{
     }
 });
 
-//maybe start a transaction + problem when we go from group to folder/all tasks
 router.put("/task/update", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {id, title, description, status, deadline, priority, folder_name, group_id, usernames} = req.body.data;
@@ -280,7 +279,7 @@ router.put("/group/update", protectedRoute, async(req, res)=>{
             }
         }
 
-        await db.execute("UPDATE `group` SET name = ?, description = ? WHERE `group`.id = ?", [name || current.name, description || current.description, group_id]); // modify the createdBy to make it like a true admin ????
+        await db.execute("UPDATE `group` SET name = ?, description = ? WHERE `group`.id = ?", [name || current.name, description || current.description, group_id]);
         return res.status(200).json({message: "Group updated successfully"});
     } catch (error) {
         console.error("Error in group update: ", error);
@@ -311,7 +310,7 @@ router.post("/group/addUsers", protectedRoute, async(req, res)=>{
         return res.status(200).json({group, usernames});
     } catch (error) {
         await connection.rollback();
-        if (error.code === "ER_NO_REFERENCED_ROW_2") return res.status(400).json({error: "SQL error"}); // add verification
+        if (error.code === "ER_NO_REFERENCED_ROW_2") return res.status(400).json({error: "SQL error"});
         if (error.code === "ER_DUP_ENTRY") return res.status(400).json({error: "User already in the group"})
         console.error(error);
         return res.status(500).json({ error: error.message });
