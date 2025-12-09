@@ -287,38 +287,6 @@ router.put("/group/update", protectedRoute, async(req, res)=>{
     }
 });
 
-router.post("/group/addUsers", protectedRoute, async(req, res)=>{
-    const user = req.user;
-    const {id_group, usernames} = req.body;
-    if (usernames.length === 0 || !id_group) return res.status(400).json({error: "Missing data"});
-
-    const connection = await db.getConnection();
-    await connection.beginTransaction();
-    try {
-        const [result] = await connection.execute("SELECT * FROM `group` WHERE id = ?", [id_group]);
-        if (result.length === 0) return res.status(400).json({error: "Group not found"});
-        
-        const group = result[0];
-        if (group.username !== user.username) return res.status(400).json({error: "Only the owner can add users"});
-
-        const usersToAdd = new Set(usernames);
-        for (const username of usersToAdd){
-            await connection.execute("INSERT INTO group_user (group_id, username) VALUES (?, ?)", [id_group, username]);
-        }
-
-        await connection.commit();
-        return res.status(200).json({group, usernames});
-    } catch (error) {
-        await connection.rollback();
-        if (error.code === "ER_NO_REFERENCED_ROW_2") return res.status(400).json({error: "SQL error"});
-        if (error.code === "ER_DUP_ENTRY") return res.status(400).json({error: "User already in the group"})
-        console.error(error);
-        return res.status(500).json({ error: error.message });
-    } finally {
-        connection.release();
-    }
-});
-
 router.post("/folder", protectedRoute, async(req, res)=>{
     const user = req.user;
     const {name} = req.body;
