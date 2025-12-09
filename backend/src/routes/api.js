@@ -343,34 +343,6 @@ router.delete("/folder", protectedRoute, async(req, res)=>{
     }
 });
 
-router.post("/folder/addTasks", protectedRoute, async(req, res)=>{
-    const user = req.user;
-    const {folder_name, ids} = req.body;
-    if (!folder_name || ids?.length == 0) return res.status(400).json({error: "Data missing"});
-
-    const connection = await db.getConnection();
-    await connection.beginTransaction();
-    try {
-        const [result] = await connection.execute("SELECT * FROM folder WHERE name = ? AND username = ?", [folder_name, user.username]);
-        if (result.length === 0) return res.status(400).json({error: "Folder not found"});
-
-        const idsToAdd = new Set(ids);
-        for (const id of idsToAdd){
-            const [verif] = await connection.execute("SELECT * FROM task_user WHERE task_id = ? AND username = ?", [id, user.username]);
-            if (verif.length === 0) return res.status(400).json({error: "Action not allowed"});
-
-            await connection.execute("UPDATE task SET folder_username = ?, folder_name = ? WHERE id = ?", [user.username, folder_name, id]);
-        }
-        await connection.commit();
-        return res.status(200).json({message: ids.length > 1 ? `Tasks added to ${folder_name}` : `Task added to ${folder_name}`});
-    } catch (error) {
-        console.error("Error in post addTasks", error);
-        return res.status(500).json({ error: error.message });
-    } finally {
-        connection.release();
-    }
-});
-
 router.get("/user", protectedRoute, async(req, res)=>{
     const user = req.user;
     try {
@@ -423,62 +395,73 @@ router.post("/dev/reset", async(req, res)=>{
             DROP TABLE IF EXISTS \`group\`;
             DROP TABLE IF EXISTS folder;
             DROP TABLE IF EXISTS user;
+            DROP TABLE IF EXISTS message;
         `);
         await connection.query("SET FOREIGN_KEY_CHECKS = 1");
         await connection.query(`
-            CREATE TABLE user (
-                username VARCHAR(50) PRIMARY KEY,
-                password VARCHAR(255) NOT NULL
-            );
-        
-            CREATE TABLE \`group\` (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                description TEXT,
-                date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                username VARCHAR(50) NOT NULL,
-                FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
-            );
-        
-            CREATE TABLE folder (
-                name VARCHAR(100),
-                date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                username VARCHAR(50) NOT NULL,
-                PRIMARY KEY (name, username),
-                FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
-            );
-        
-            CREATE TABLE task (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                title VARCHAR(100) NOT NULL,
-                description TEXT,
-                status VARCHAR(20) NOT NULL,
-                deadline DATE,
-                priority VARCHAR(20),
-                date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                folder_name VARCHAR(100),
-                folder_username VARCHAR(50),
-                group_id INT,
-                FOREIGN KEY (folder_name, folder_username) REFERENCES folder(name, username) ON DELETE CASCADE ON UPDATE CASCADE,
-                FOREIGN KEY (group_id) REFERENCES \`group\`(id) ON DELETE CASCADE ON UPDATE CASCADE
-            );
-        
-            CREATE TABLE group_user (
-                username VARCHAR(50),
-                group_id INT,
-                PRIMARY KEY (username, group_id),
-                FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
-                FOREIGN KEY (group_id) REFERENCES \`group\`(id) ON DELETE CASCADE ON UPDATE CASCADE
-            );
-        
-            CREATE TABLE task_user (
-                username VARCHAR(50),
-                task_id INT,
-                PRIMARY KEY (username, task_id),
-                FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
-                FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE CASCADE ON UPDATE CASCADE
-            );`
+        CREATE TABLE user (
+            username VARCHAR(50) PRIMARY KEY,
+            password VARCHAR(255) NOT NULL
         );
+
+        CREATE TABLE folder (
+            name VARCHAR(100),
+            date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            username VARCHAR(50) NOT NULL,
+            PRIMARY KEY (name, username),
+            FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
+        );
+
+        CREATE TABLE \`group\` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            description TEXT,
+            date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            createdBy VARCHAR(50) NOT NULL,
+            FOREIGN KEY (createdBy) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE
+        );
+
+        CREATE TABLE group_user (
+            username VARCHAR(50),
+            group_id INT,
+            PRIMARY KEY (username, group_id),
+            FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (group_id) REFERENCES \`group\`(id) ON DELETE CASCADE ON UPDATE CASCADE
+        );
+
+        CREATE TABLE task (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(100) NOT NULL,
+            description TEXT,
+            status VARCHAR(20) NOT NULL,
+            deadline DATE,
+            priority VARCHAR(20),
+            date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            folder_name VARCHAR(100) NULL,
+            folder_username VARCHAR(50) NULL,
+            group_id INT,
+            FOREIGN KEY (folder_name, folder_username) REFERENCES folder(name, username) ON DELETE SET NULL ON UPDATE CASCADE,
+            FOREIGN KEY (group_id )REFERENCES \`group\`(id) ON DELETE SET NULL ON UPDATE CASCADE
+        );
+
+
+        CREATE TABLE task_user (
+            username VARCHAR(50),
+            task_id INT,
+            PRIMARY KEY (username, task_id),
+            FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE CASCADE ON UPDATE CASCADE
+        );
+
+        CREATE TABLE message (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            content TEXT NOT NULL,
+            username VARCHAR(50) NOT NULL,
+            group_id INT NOT NULL,
+            FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (group_id) REFERENCES \`group\`(id) ON DELETE CASCADE ON UPDATE CASCADE
+        );`);
         connection.release();
         return res.status(200).json({message: "Database reset successfully"});
     } catch (error) {

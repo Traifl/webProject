@@ -91,7 +91,9 @@ onMounted(async()=>{
             </button>
           </div>
 
-          <Task v-for="task in global.filteredTasks" :key="task.id" :task="task"/>
+          <div class="w-49.5">
+            <Task v-for="task in global.filteredTasks" :key="task.id" :task="task"/>
+          </div>
         </div>
 
         <div v-if="global.selectedBinder?.id" class="flex flex-row">
